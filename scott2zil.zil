@@ -158,25 +158,29 @@
 		<COND (<AND <L=? .NUMBER-OF-WORDS 2> <G=? .NUMBER-OF-WORDS 1>> 
 			<DO (I 0 ,NUMBER-VOCABULARY)
 				;"Identify verb"
-				<SET TEMP <GET <GET ,VOCABULARY-TABLE .I> 1>>  ;"Current verb"
-				<COND (<=? <GETB .TEMP 0> !\*>
-					<SET TEMP <REST .TEMP>>		;"If synonym remove the * for before comparing"
-				)
-				(ELSE
-					<SET NON-SYN-VERB-ID .I>
-				)>
-				<COND (<WORD-EQUAL? .TEMP ,SA-VERB> <SET VERB-ID .NON-SYN-VERB-ID>)>
-				
-				;"Identify noun"
-				<COND (<=? .NUMBER-OF-WORDS 2> 
-					<SET TEMP <GET <GET ,VOCABULARY-TABLE .I> 2>>  ;"Current noun"
+				<COND (<0? .VERB-ID>   ;"Get the FIRST match"
+					<SET TEMP <GET <GET ,VOCABULARY-TABLE .I> 1>>  ;"Current verb"
 					<COND (<=? <GETB .TEMP 0> !\*>
 						<SET TEMP <REST .TEMP>>		;"If synonym remove the * for before comparing"
 					)
 					(ELSE
-						<SET NON-SYN-NOUN-ID .I>
+						<SET NON-SYN-VERB-ID .I>
 					)>
-					<COND (<WORD-EQUAL? .TEMP ,SA-NOUN> <SET NOUN-ID .NON-SYN-NOUN-ID>)>
+					<COND (<WORD-EQUAL? .TEMP ,SA-VERB> <SET VERB-ID .NON-SYN-VERB-ID>)>
+				)>
+
+				;"Identify noun"
+				<COND (<=? .NUMBER-OF-WORDS 2> 
+					<COND (<0? .NOUN-ID>   ;"Get the FIRST match"
+						<SET TEMP <GET <GET ,VOCABULARY-TABLE .I> 2>>  ;"Current noun"
+						<COND (<=? <GETB .TEMP 0> !\*>
+							<SET TEMP <REST .TEMP>>		;"If synonym remove the * for before comparing"
+						)
+						(ELSE
+							<SET NON-SYN-NOUN-ID .I>
+						)>
+						<COND (<WORD-EQUAL? .TEMP ,SA-NOUN> <SET NOUN-ID .NON-SYN-NOUN-ID>)>
+					)>
 				)>
 			>
 		)>
