@@ -17,6 +17,6 @@ Scott2Zil is a tool that takes a data-file for a game in the Scott Adams-style g
 # Manual
 * Take the data from the *.sao or *.dat you created with scottkit or obtained by other means and paste it in the table game-dat. Currently there is adventure 1 - Adventureland, just replace it.
 * If you want you can change some of the game constants that controls for example the standard messages and if the gameflow is with split screen or conversational.
-* Compile the game with ZILF and play in a Z-machine of your choice (I use Windows Frotz 1.21 myself). There is a make-file with the syntax for ZILF and ZAPF but probably the paths need to be changed.
+* Compile the game with ZILF and play in a Z-machine of your choice (I use Windows Frotz 1.21 myself). There is a make-file with the syntax for ZILF and ZAPF but you probably need to change the paths.
 
 Plase report any issues you find!
