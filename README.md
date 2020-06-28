@@ -11,6 +11,7 @@ Scott2Zil is a tool that takes a data-file for a game in the Scott Adams-style g
 
 ## scott2zil is tested with the following games:
  - 01 Adventureland
+ - 02 Pirate Adventure
  - 03 Mission Impossible
  - Ghost King
 
