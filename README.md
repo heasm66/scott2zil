@@ -21,3 +21,9 @@ Scott2Zil is a tool that takes a data-file for a game in the Scott Adams-style g
 * Compile the game with ZILF and play in a Z-machine of your choice (I use Windows Frotz 1.21 myself). There is a make-file with the syntax for ZILF and ZAPF but you probably need to change the paths.
 
 Plase report any issues you find!
+
+You can redistribute and/or modify this file under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This file is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this file. If not, see <https://www.gnu.org/licenses/>.
