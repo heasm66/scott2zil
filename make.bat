@@ -20,4 +20,5 @@ del /F /Q zapf\*.*
 move *.zap zapf\
 move *.xzap zapf\
 move *.dbg zapf\
-move *.z5 bin\
+move *.z? bin\
+pause
