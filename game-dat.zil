@@ -13,6 +13,20 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this file. If not, see <https://www.gnu.org/licenses/>."
 
+;"
+Here you define the compiling target. The options are:
+XZIP  The game compiles to version 5 (z5). This is the prefered option
+      because all features are available. 
+ZIP   The game compiles to version 3 (z3). You lose the following:
+        - Game mode 'split screen' is not available, only conversational.
+        - The player can obviously not change game mode with 'CHANGE MODE'.
+        - You can't use n, s, e, w, u, d, i & l you have to type the
+          full 'go north, go south, ...'
+        - You have to live with a status line (always there in V3).
+        - '70 CLS - clear' doesn't work in V3 (it is simply ignored).
+        - '88 DELAY - pause' doesn't work in V3 (it is simply ignored)."
+<VERSION XZIP>
+
 ;"Set this to change the gameflow between conversational or split screen.
     T   True = Coversational flow
     <>  False = Split screen"
@@ -27,7 +41,7 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 ;"Determines (in conversational):
     <>  Brief mode. Only print full room description on first visit
     T   Verbose mode. Always print full room description"
-<CONSTANT CAN-PLAYER-CHANGE-GAME-MODE T>
+<GLOBAL CAN-PLAYER-CHANGE-GAME-MODE T>
 
 ;"Set the standard messages you want for the game."
 <CONSTANT MSG-INTRO 
