@@ -1,3 +1,4 @@
+echo off
 rem Copyright (C) 2020 heasm66
 rem You can redistribute and/or modify this file under the terms of the
 rem GNU General Public License as published by the Free Software
@@ -9,7 +10,7 @@ rem MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 rem General Public License for more details.
 rem You should have received a copy of the GNU General Public License
 rem along with this file. If not, see <https://www.gnu.org/licenses/>."
-
+echo on
 ..\..\..\Source\ZIL\ZILF\zilf-0.9.0-win-x64\bin\zilf.exe -w scott2zil.zil
 ..\..\..\Source\ZIL\ZILF\zilf-0.9.0-win-x64\bin\Zapf.exe -ab scott2zil.zap > scott2zil_freq.xzap
 del scott2zil_freq.zap
