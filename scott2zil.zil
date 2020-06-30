@@ -17,7 +17,7 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
     (ZIP)
     (ELSE)>
 
-<CONSTANT RELEASEID 2>
+<CONSTANT RELEASEID 3>
 
 ;"Insert the gamedata-file"
 <INSERT-FILE "game-dat">
@@ -42,7 +42,7 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 <CONSTANT ROOM-INVENTORY -1>
 <CONSTANT COUNTER-TIME-LIMIT 8>
 
-<CONSTANT ABBREVIATIONS 
+<CONSTANT ABREVIATIONS 
 	<TABLE 
 		<STRING-TO-TABLE "go north">
 		<STRING-TO-TABLE "go south">
@@ -83,12 +83,18 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 <OBJECT ROOMS <LIST DESC " ">> 		;"Create one empty room for V3 statusline"
 <GLOBAL HERE 1>                    	;"Position player in the empty room (only for V3 statusline)"
 
+<GLOBAL ROWPOS 12>
+<GLOBAL CURPOS <TABLE 0 0>>
+
+<GLOBAL ROOM-DESC-PRINTED? <>>		;"Flag to assure that room-desc only prints once every cycle"
+
 ;"The game-loop starts here"
 <ROUTINE GO () 
 	<COND (<VERSION? (ZIP)> 	;"Version 3 is always conversational"
 		<SETG GAME-CONVERSATIONAL T>
 		<SETG CAN-PLAYER-CHANGE-GAME-MODE <>>
 	)>
+	<COND (,COMPACT-ROOM-DESC <SETG ROWPOS <- ,ROWPOS 3>>)>
     <CRLF>
 	<FIXED-FONT-ON>			;"Always fixed font"
 	<SETG CURRENT-ROOM ,STARTING-ROOM>
@@ -106,6 +112,9 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 		<DO (I 0 62) <PUTB ,PARSEBUF .I 0>>
 		<DO (I 0 9) <PUTB ,SA-VERB .I 0>>
 		<DO (I 0 9) <PUTB ,SA-NOUN .I 0>>
+
+		<SETG ROOM-DESC-PRINTED? <>>    ;"Clear flag"
+
 		<TELL ,MSG-PROMPT>
 		<PUTB ,READBUF 0 60>
 		<PUTB ,PARSEBUF 0 6>
@@ -234,14 +243,14 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 
 		<RUN-ACTIONS .VERB-ID .NOUN-ID>			;"Chek if possible AUT-actions needs to run"
 
-		<COND (<NOT ,GAME-CONVERSATIONAL> <SHOW-ROOM-DESC>)>	;"Refresh if split screen"
+		<COND (<AND <NOT ,GAME-CONVERSATIONAL> <NOT ,ROOM-DESC-PRINTED?>> <SHOW-ROOM-DESC>)>	;"Refresh if split screen"
 	>
 >
 
 <ROUTINE RUN-ACTIONS (VERB-ID NOUN-ID 
 						"AUX" ROOM-DARK DEST FOUND-WORD WORD-ACTION-DONE 
 							  ACTION-VERB-ID ACTION-NOUN-ID) 
-	
+
 	;"Handle GO [direction]"
 	<COND (<AND <=? .VERB-ID ,VERB-GO> <L=? .NOUN-ID ,DIRECTION-NOUNS>>
 		<SET ROOM-DARK <AND <GET-FLAG ,FLAG-DARK> 
@@ -828,10 +837,7 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 	<RTRUE>
 >
 
-<GLOBAL ROWPOS 12>
-<GLOBAL CURPOS <TABLE 0 0>>
-
-<ROUTINE PRINT-ROOM-DESC ("AUX" ITEM-FOUND EXIT-FOUND FIRST-EXIT CURPOS)
+<ROUTINE PRINT-ROOM-DESC ()
 	;"Dark?"
 	<COND (<GET-FLAG ,FLAG-DARK>
 		<COND (<NOT <OR <=? <GET-ITEM-LOC ,LIGHT-SOURCE-ID> ,ROOM-INVENTORY>  <=? <GET-ITEM-LOC ,LIGHT-SOURCE-ID> ,CURRENT-ROOM>>>
@@ -846,12 +852,26 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 	)>
 	<TELL <GET-ROOM-DESC ,CURRENT-ROOM> CR>
 
+	<COND (<0? ,ROOM-DESC-ORDER>
+		<PRINT-ROOM-ITEMS>
+		<PRINT-ROOM-EXITS>
+	)
+	(ELSE
+		<PRINT-ROOM-EXITS>
+		<PRINT-ROOM-ITEMS>
+	)>
+
+	<SETG ROOM-DESC-PRINTED? T>    ;"Set flag to stop ROOM-DESC to be printed more times this cycle"
+>
+
+<ROUTINE PRINT-ROOM-ITEMS ("AUX" ITEM-FOUND CURPOS)
 	;"Show items"
 	<SET ITEM-FOUND <>>
 	<DO (I 0 ,NUMBER-ITEMS)
 		<COND (<=? <GET-ITEM-LOC .I> ,CURRENT-ROOM>
 			<COND (<NOT .ITEM-FOUND>
-				<TELL CR ,MSG-VISIBLE-ITEMS-HERE> 
+		<COND (<NOT ,COMPACT-ROOM-DESC> <TELL CR>)> 
+				<TELL ,MSG-VISIBLE-ITEMS-HERE> 
 				<SET .CURPOS 20>
 				<SET .ITEM-FOUND T> 
 			)>
@@ -861,13 +881,16 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 		)>
 	> 
 	<COND (.ITEM-FOUND <TELL CR>)>
+>
 
+<ROUTINE PRINT-ROOM-EXITS ("AUX" EXIT-FOUND FIRST-EXIT)
     ;"Show exits"
 	<SET EXIT-FOUND <>>
 	<DO (I 1 6)
 		<COND (<G? <GET-ROOM-EXIT ,CURRENT-ROOM .I> 0> <SET EXIT-FOUND T>)>>
-	<COND (.EXIT-FOUND 
-		<TELL CR ,MSG-OBVIOUS-EXITS>
+	<COND (.EXIT-FOUND
+		<COND (<NOT ,COMPACT-ROOM-DESC> <TELL CR>)> 
+		<TELL ,MSG-OBVIOUS-EXITS>
 		<SET FIRST-EXIT T>
 		<DO (I 1 6)
 			<COND (<G? <GET-ROOM-EXIT ,CURRENT-ROOM .I> 0>
@@ -971,14 +994,14 @@ Thanks to:|
 	(ELSE
 		<ROUTINE CHECK-ABREVIATIONS (POS) 
 			;"Abreviation if one word of one character. Put new command in READBUF and reparse."
-			<COND (<=? <GETB ,READBUF .POS> !\n> <COPY-TO-READBUF <GET ,ABBREVIATIONS 0>> <LEX ,READBUF ,PARSEBUF>)>
-			<COND (<=? <GETB ,READBUF .POS> !\s> <COPY-TO-READBUF <GET ,ABBREVIATIONS 1>> <LEX ,READBUF ,PARSEBUF>)>
-			<COND (<=? <GETB ,READBUF .POS> !\e> <COPY-TO-READBUF <GET ,ABBREVIATIONS 2>> <LEX ,READBUF ,PARSEBUF>)>
-			<COND (<=? <GETB ,READBUF .POS> !\w> <COPY-TO-READBUF <GET ,ABBREVIATIONS 3>> <LEX ,READBUF ,PARSEBUF>)>
-			<COND (<=? <GETB ,READBUF .POS> !\u> <COPY-TO-READBUF <GET ,ABBREVIATIONS 4>> <LEX ,READBUF ,PARSEBUF>)>
-			<COND (<=? <GETB ,READBUF .POS> !\d> <COPY-TO-READBUF <GET ,ABBREVIATIONS 5>> <LEX ,READBUF ,PARSEBUF>)>
-			<COND (<=? <GETB ,READBUF .POS> !\l> <COPY-TO-READBUF <GET ,ABBREVIATIONS 6>> <LEX ,READBUF ,PARSEBUF>)>
-			<COND (<=? <GETB ,READBUF .POS> !\i> <COPY-TO-READBUF <GET ,ABBREVIATIONS 7>> <LEX ,READBUF ,PARSEBUF>)>
+			<COND (<=? <GETB ,READBUF .POS> !\n> <COPY-TO-READBUF <GET ,ABREVIATIONS 0>> <LEX ,READBUF ,PARSEBUF>)>
+			<COND (<=? <GETB ,READBUF .POS> !\s> <COPY-TO-READBUF <GET ,ABREVIATIONS 1>> <LEX ,READBUF ,PARSEBUF>)>
+			<COND (<=? <GETB ,READBUF .POS> !\e> <COPY-TO-READBUF <GET ,ABREVIATIONS 2>> <LEX ,READBUF ,PARSEBUF>)>
+			<COND (<=? <GETB ,READBUF .POS> !\w> <COPY-TO-READBUF <GET ,ABREVIATIONS 3>> <LEX ,READBUF ,PARSEBUF>)>
+			<COND (<=? <GETB ,READBUF .POS> !\u> <COPY-TO-READBUF <GET ,ABREVIATIONS 4>> <LEX ,READBUF ,PARSEBUF>)>
+			<COND (<=? <GETB ,READBUF .POS> !\d> <COPY-TO-READBUF <GET ,ABREVIATIONS 5>> <LEX ,READBUF ,PARSEBUF>)>
+			<COND (<=? <GETB ,READBUF .POS> !\l> <COPY-TO-READBUF <GET ,ABREVIATIONS 6>> <LEX ,READBUF ,PARSEBUF>)>
+			<COND (<=? <GETB ,READBUF .POS> !\i> <COPY-TO-READBUF <GET ,ABREVIATIONS 7>> <LEX ,READBUF ,PARSEBUF>)>
 		>
 
 		<ROUTINE CHANGE-GAME-MODE ()
