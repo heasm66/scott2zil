@@ -43,6 +43,14 @@ ZIP   The game compiles to version 3 (z3). You lose the following:
     T   Verbose mode. Always print full room description"
 <GLOBAL CAN-PLAYER-CHANGE-GAME-MODE T>
 
+;"Determines if there should be blank lines between DESC, ITEMS & EXITS"
+<CONSTANT COMPACT-ROOM-DESC <>>
+
+;"Determines in wich order room descriptions should print
+    0   DESC, ITEMS, EXITS
+    1   DESC, EXITS, ITEMS"
+<CONSTANT ROOM-DESC-ORDER 0>
+
 ;"Set the standard messages you want for the game."
 <CONSTANT MSG-INTRO 
 "                 *** Welcome ***|
