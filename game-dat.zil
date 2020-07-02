@@ -29,7 +29,7 @@ ZIP   The game compiles to version 3 (z3). You lose the following:
         - You have to live with a status line (always there in V3).
         - '70 CLS - clear' doesn't work in V3 (it is simply ignored).
         - '88 DELAY - pause' doesn't work in V3 (it is simply ignored)."
-<VERSION ZIP>
+<VERSION XZIP>
 
 ;"Set this to change the gameflow between conversational or split screen.
     T   True = Coversational flow
