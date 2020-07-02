@@ -17,7 +17,7 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
     (ZIP)
     (ELSE)>
 
-<CONSTANT RELEASEID 3>
+<CONSTANT RELEASEID 4>
 
 ;"Insert the gamedata-file"
 <INSERT-FILE "game-dat">
@@ -83,7 +83,6 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 <OBJECT ROOMS <LIST DESC " ">> 		;"Create one empty room for V3 statusline"
 <GLOBAL HERE 1>                    	;"Position player in the empty room (only for V3 statusline)"
 
-<GLOBAL ROWPOS 12>
 <GLOBAL CURPOS <TABLE 0 0>>
 
 <GLOBAL ROOM-DESC-PRINTED? <>>		;"Flag to assure that room-desc only prints once every cycle"
@@ -94,7 +93,7 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 		<SETG GAME-CONVERSATIONAL T>
 		<SETG CAN-PLAYER-CHANGE-GAME-MODE <>>
 	)>
-	<COND (,COMPACT-ROOM-DESC <SETG ROWPOS <- ,ROWPOS 3>>)>
+	<COND (,COMPACT-ROOM-DESC <SETG STARTING-SPLITROW <- ,STARTING-SPLITROW 3>>)>
     <CRLF>
 	<FIXED-FONT-ON>			;"Always fixed font"
 	<SETG CURRENT-ROOM ,STARTING-ROOM>
@@ -154,7 +153,7 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 			<COND (<RESTORE> 
 				<SHOW-ROOM-DESC>)
 			(ELSE 
-				<TELL "Load failed." CR>
+				<TELL ,MSG-LOAD-FAILED CR>
 			)>
 		<AGAIN>
 		)>
@@ -225,7 +224,11 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 			)
 			(ELSE
 				<COND (<L? <GET ,ALTERNATE-COUNTER ,COUNTER-TIME-LIMIT> ,LIGHT-WARNING-THRESHOLD>
-					<TELL ,MSG-LIGHTS-OUT-WARNING CR>
+					<TELL ,MSG-LIGHTS-OUT-WARNING-1>
+					<COND (<NOT <=? ,MSG-LIGHTS-OUT-WARNING-2 "">> 
+						<TELL N <GET ,ALTERNATE-COUNTER ,COUNTER-TIME-LIMIT> ,MSG-LIGHTS-OUT-WARNING-2>
+					)>
+					<TELL CR>
 				)>
 			)>
 		)>
@@ -476,7 +479,7 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 	>
 >
 
-<ROUTINE EXECUTE-INSTRUCTION (ACTION-ID CODE "AUX" STORED-TREASURES ITEM-FOUND CURPOS ARG1 ARG2 TEMP)
+<ROUTINE EXECUTE-INSTRUCTION (ACTION-ID CODE "AUX" STORED-TREASURES ITEM-FOUND NOT-FIRST-ITEM CURPOS ARG1 ARG2 TEMP)
 
     ;"52 GETx - get - Get item <arg>. Checks if you can carry it first"
 	<COND (<=? .CODE 52>
@@ -556,10 +559,12 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 				<SET STORED-TREASURES <+ .STORED-TREASURES 1>>
 			)>
 		>
-		<TELL "I've stored " N .STORED-TREASURES " treasures. On a scale of 0 to 100 that rates ">
-		<TELL N </ <* .STORED-TREASURES 100> ,TOTAL-TREASURES> "." CR>
+		<TELL ,MSG-SCORE-1>
+		<COND (<NOT <=? ,MSG-SCORE-2 "">> <TELL N .STORED-TREASURES ,MSG-SCORE-2>)>
+		<COND (<NOT <=? ,MSG-SCORE-3 "">> <TELL N </ <* .STORED-TREASURES 100> ,TOTAL-TREASURES> ,MSG-SCORE-3>)>
+		<TELL CR>
 		<COND (<=? .STORED-TREASURES ,TOTAL-TREASURES> 
-			<TELL "Well done." CR>
+			<TELL ,MSG-WINNING CR>
 			<QUIT>
 		)>
 	)>
@@ -568,16 +573,19 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 	<COND (<=? .CODE 66>
 		<TELL ,MSG-IM-CARRYING CR>
 		<SET ITEM-FOUND <>>
+		<SET NOT-FIRST-ITEM <>>
 		<SET CURPOS 0>
 		<DO (I 0 ,NUMBER-ITEMS)
 			<COND (<=? <GET-ITEM-LOC .I> ,ROOM-INVENTORY>
+				<COND (.NOT-FIRST-ITEM <TELL ", ">)>
+				<SET NOT-FIRST-ITEM T>
 				<COND (<G=? <+ <GET-ITEM-DESC-LENGTH .I> .CURPOS 2> ,SCREEN-WIDTH> <TELL CR> <SET .CURPOS 0>)>
-				<TELL <GET-ITEM-DESC .I> ". ">
+				<TELL <GET-ITEM-DESC .I>>
 				<SET CURPOS <+ .CURPOS <GET-ITEM-DESC-LENGTH .I> 2>>
 				<SET ITEM-FOUND T>
 			)>
 		>
-		<COND (<NOT .ITEM-FOUND> <TELL ,MSG-CARRYING-NOTHING>)> 
+		<COND (.ITEM-FOUND <TELL ".">)(ELSE <TELL ,MSG-CARRYING-NOTHING>)> 
 		<TELL CR>
 	)>
 
@@ -608,7 +616,7 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 		;"SAVE return 0 for failed save, 1 for sucessfull save and 2 for sucessfull RESTORE. The logic being that the
 		  game resumes from this point (where it was saved) after the RESTORE."
 		<SET TEMP <SAVE>> 	
-    	<COND (<=? .TEMP 0> <TELL "Save failed." CR>)>
+    	<COND (<=? .TEMP 0> <TELL ,MSG-SAVE-FAILED CR>)>
     	<COND (<=? .TEMP 2> <SHOW-ROOM-DESC>)>				
 	)>
 
@@ -814,12 +822,22 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 
 <ROUTINE FIXED-FONT-OFF() <PUT 0 8 <BAND <GET 0 8> -3>>>
 
-<ROUTINE COPY-TO-READBUF (TBL)
-	<REPEAT ((N 0) C)
+<ROUTINE REPARSE (TBL)
+	<REPEAT ((N 0) C (W 1) (L 0))
 		<SET C <GETB .TBL .N>>
 		<PUTB ,READBUF <+ .N 2> .C>
+		<COND (<=? .C 32>
+			<SET W <+ .W 1>>
+			<SET L .N>
+		)>
 		<COND (<=? .C 0>
-			<PUTB ,READBUF 1 .N>	;"Length to byte 1 in readbuf"
+			<COND (<0? .L> <SET L .N>)>
+			<PUTB ,READBUF 1 .N>			;"Length to byte 1 in readbuf"
+			<PUTB ,PARSEBUF 1 .W>			;"Number of words in #1"
+			<PUTB ,PARSEBUF 4 .L>			;"Length of first word in #4"
+			<PUTB ,PARSEBUF 5 2>			;"Startpos of first word in #5"
+			<PUTB ,PARSEBUF 8 <- .N .L 1>>	;"Length of second word in #8"
+			<PUTB ,PARSEBUF 9 <+ .L 3>>		;"Startpos of second word in #9"
 			<RTRUE>
 		)>
 		<SET N <+ .N 1>>
@@ -860,34 +878,38 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 		<PRINT-ROOM-EXITS>
 		<PRINT-ROOM-ITEMS>
 	)>
+	<COND (<NOT ,GAME-CONVERSATIONAL> <TELL CR>)>		;"Extra CR, just in case there was no exits or no items"
 
 	<SETG ROOM-DESC-PRINTED? T>    ;"Set flag to stop ROOM-DESC to be printed more times this cycle"
 >
 
-<ROUTINE PRINT-ROOM-ITEMS ("AUX" ITEM-FOUND CURPOS)
+<ROUTINE PRINT-ROOM-ITEMS ("AUX" (ITEM-FOUND <>) (NOT-FIRST-ITEM <>) CURPOS)
 	;"Show items"
-	<SET ITEM-FOUND <>>
 	<DO (I 0 ,NUMBER-ITEMS)
 		<COND (<=? <GET-ITEM-LOC .I> ,CURRENT-ROOM>
 			<COND (<NOT .ITEM-FOUND>
-		<COND (<NOT ,COMPACT-ROOM-DESC> <TELL CR>)> 
+				<COND (<NOT ,COMPACT-ROOM-DESC> <TELL CR>)> 
 				<TELL ,MSG-VISIBLE-ITEMS-HERE> 
 				<SET .CURPOS 20>
 				<SET .ITEM-FOUND T> 
 			)>
+			<COND (.NOT-FIRST-ITEM <TELL ", ">)>
+			<SET NOT-FIRST-ITEM T>
 			<COND (<G=? <+ <GET-ITEM-DESC-LENGTH .I> .CURPOS 2> ,SCREEN-WIDTH> <TELL CR> <SET .CURPOS 0>)>
-			<TELL <GET-ITEM-DESC .I> ". ">
+			<TELL <GET-ITEM-DESC .I>>
 			<SET CURPOS <+ .CURPOS <GET-ITEM-DESC-LENGTH .I> 2>>
 		)>
 	> 
-	<COND (.ITEM-FOUND <TELL CR>)>
+	<COND (.ITEM-FOUND <TELL "." CR>)>
+	<COND (<AND <NOT .ITEM-FOUND> ,PRINT-NONE-WHEN-NO-ITEMS> 
+		<COND (<NOT ,COMPACT-ROOM-DESC> <TELL CR>)>
+		<TELL ,MSG-VISIBLE-ITEMS-HERE ,MSG-WHEN-NO-EXITS-ITEMS CR>
+	)>
 >
 
-<ROUTINE PRINT-ROOM-EXITS ("AUX" EXIT-FOUND FIRST-EXIT)
+<ROUTINE PRINT-ROOM-EXITS ("AUX" (EXIT-FOUND <>) FIRST-EXIT)
     ;"Show exits"
-	<SET EXIT-FOUND <>>
-	<DO (I 1 6)
-		<COND (<G? <GET-ROOM-EXIT ,CURRENT-ROOM .I> 0> <SET EXIT-FOUND T>)>>
+	<DO (I 1 6) <COND (<G? <GET-ROOM-EXIT ,CURRENT-ROOM .I> 0> <SET EXIT-FOUND T>)>>
 	<COND (.EXIT-FOUND
 		<COND (<NOT ,COMPACT-ROOM-DESC> <TELL CR>)> 
 		<TELL ,MSG-OBVIOUS-EXITS>
@@ -906,6 +928,22 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 		>
 		<TELL "." CR>
 	)>
+	<COND (<AND <NOT .EXIT-FOUND> ,PRINT-NONE-WHEN-NO-EXITS>
+		<COND (<NOT ,COMPACT-ROOM-DESC> <TELL CR>)> 
+		<TELL ,MSG-OBVIOUS-EXITS ,MSG-WHEN-NO-EXITS-ITEMS CR>
+	)>
+>
+
+<ROUTINE CHECK-ABREVIATIONS (POS) 
+	;"Abreviation if one word of one character. Put new command in READBUF and reparse."
+	<COND (<=? <GETB ,READBUF .POS> !\n> <REPARSE <GET ,ABREVIATIONS 0>>)>
+	<COND (<=? <GETB ,READBUF .POS> !\s> <REPARSE <GET ,ABREVIATIONS 1>>)>
+	<COND (<=? <GETB ,READBUF .POS> !\e> <REPARSE <GET ,ABREVIATIONS 2>>)>
+	<COND (<=? <GETB ,READBUF .POS> !\w> <REPARSE <GET ,ABREVIATIONS 3>>)>
+	<COND (<=? <GETB ,READBUF .POS> !\u> <REPARSE <GET ,ABREVIATIONS 4>>)>
+	<COND (<=? <GETB ,READBUF .POS> !\d> <REPARSE <GET ,ABREVIATIONS 5>>)>
+	<COND (<=? <GETB ,READBUF .POS> !\l> <REPARSE <GET ,ABREVIATIONS 6>>)>
+	<COND (<=? <GETB ,READBUF .POS> !\i> <REPARSE <GET ,ABREVIATIONS 7>>)>
 >
 
 ;"=====================================================================================
@@ -964,9 +1002,6 @@ Thanks to:|
 ;"Different versions of routines for ZIP or XZIP"
 <VERSION? 
 	(ZIP
-		;"<LEX> is not supported in V3"
-		<ROUTINE CHECK-ABREVIATIONS (POS) <RETURN>>
-
 		;"<INPUT>, <CLEAR>, <SPLIT> is not supported in V3"
 		<ROUTINE CHANGE-GAME-MODE () <RETURN>>
 
@@ -992,18 +1027,6 @@ Thanks to:|
 		>
 	)
 	(ELSE
-		<ROUTINE CHECK-ABREVIATIONS (POS) 
-			;"Abreviation if one word of one character. Put new command in READBUF and reparse."
-			<COND (<=? <GETB ,READBUF .POS> !\n> <COPY-TO-READBUF <GET ,ABREVIATIONS 0>> <LEX ,READBUF ,PARSEBUF>)>
-			<COND (<=? <GETB ,READBUF .POS> !\s> <COPY-TO-READBUF <GET ,ABREVIATIONS 1>> <LEX ,READBUF ,PARSEBUF>)>
-			<COND (<=? <GETB ,READBUF .POS> !\e> <COPY-TO-READBUF <GET ,ABREVIATIONS 2>> <LEX ,READBUF ,PARSEBUF>)>
-			<COND (<=? <GETB ,READBUF .POS> !\w> <COPY-TO-READBUF <GET ,ABREVIATIONS 3>> <LEX ,READBUF ,PARSEBUF>)>
-			<COND (<=? <GETB ,READBUF .POS> !\u> <COPY-TO-READBUF <GET ,ABREVIATIONS 4>> <LEX ,READBUF ,PARSEBUF>)>
-			<COND (<=? <GETB ,READBUF .POS> !\d> <COPY-TO-READBUF <GET ,ABREVIATIONS 5>> <LEX ,READBUF ,PARSEBUF>)>
-			<COND (<=? <GETB ,READBUF .POS> !\l> <COPY-TO-READBUF <GET ,ABREVIATIONS 6>> <LEX ,READBUF ,PARSEBUF>)>
-			<COND (<=? <GETB ,READBUF .POS> !\i> <COPY-TO-READBUF <GET ,ABREVIATIONS 7>> <LEX ,READBUF ,PARSEBUF>)>
-		>
-
 		<ROUTINE CHANGE-GAME-MODE ()
 					<SETG GAME-CONVERSATIONAL <NOT ,GAME-CONVERSATIONAL>>
 					<COND (,GAME-CONVERSATIONAL
@@ -1034,10 +1057,10 @@ Thanks to:|
 
 		<ROUTINE SHOW-ROOM-DESC("AUX" NEW-ROWPOS) 
 			<COND (<NOT ,GAME-CONVERSATIONAL>
-				<SPLIT ,ROWPOS>
+				<SPLIT ,STARTING-SPLITROW>
 				<CLEAR 1>
 				<SCREEN 1>
-				<CURSET ,ROWPOS 1>
+				<CURSET ,STARTING-SPLITROW 1>
 				<TELL ,SCREEN-BAR> 
 				<CURSET 1 1>
 			)>
@@ -1048,19 +1071,19 @@ Thanks to:|
 			<COND (<NOT ,GAME-CONVERSATIONAL>
 				<SET NEW-ROWPOS <>>
 				<CURGET ,CURPOS>
-				<COND (<L? <GET ,CURPOS 0> 3>						;"Som interpreters (WinFrotz) wrap around if screen is overflown."
-					<SETG ROWPOS <+ <GET ,CURPOS 0> 1 ,ROWPOS>>		;"If row is below 3 this have happend (row never should be lower than 3)."
-					<SET NEW-ROWPOS T>								;"Enlarge the top screen in this case."
+				<COND (<L? <GET ,CURPOS 0> 3>											;"Some interpreters (WinFrotz) wrap around if screen is overflown."
+					<SETG STARTING-SPLITROW <+ <GET ,CURPOS 0> 1 ,STARTING-SPLITROW>>	;"If row is below 3 this have happend (row never should be lower than 3)."
+					<SET NEW-ROWPOS T>													;"Enlarge the top screen in this case."
 				)>
-				<COND (<G=? <GET ,CURPOS 0> ,ROWPOS>
-					<SETG ROWPOS <+ <GET ,CURPOS 0> 1>>
+				<COND (<G=? <GET ,CURPOS 0> ,STARTING-SPLITROW>
+					<SETG STARTING-SPLITROW <+ <GET ,CURPOS 0> 1>>
 					<SET NEW-ROWPOS T>
 				)>
 				<COND (.NEW-ROWPOS
-					<SPLIT ,ROWPOS>
+					<SPLIT ,STARTING-SPLITROW>
 					<CLEAR 1>
 					<SCREEN 1>
-					<CURSET ,ROWPOS 1>
+					<CURSET ,STARTING-SPLITROW 1>
 					<TELL ,SCREEN-BAR> 
 					<CURSET 1 1>
 					<PRINT-ROOM-DESC>
