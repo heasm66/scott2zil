@@ -13,6 +13,12 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this file. If not, see <https://www.gnu.org/licenses/>."
 
+
+;"==========================================================================
+  =                                                                        =
+  =  Constants and globals that controls how the compiled game behaves     =
+  =                                                                        =
+  =========================================================================="
 ;"
 Here you define the compiling target. The options are:
 XZIP  The game compiles to version 5 (z5). This is the prefered option
@@ -20,8 +26,6 @@ XZIP  The game compiles to version 5 (z5). This is the prefered option
 ZIP   The game compiles to version 3 (z3). You lose the following:
         - Game mode 'split screen' is not available, only conversational.
         - The player can obviously not change game mode with 'CHANGE MODE'.
-        - You can't use n, s, e, w, u, d, i & l you have to type the
-          full 'go north, go south, ...'
         - You have to live with a status line (always there in V3).
         - '70 CLS - clear' doesn't work in V3 (it is simply ignored).
         - '88 DELAY - pause' doesn't work in V3 (it is simply ignored)."
@@ -46,10 +50,18 @@ ZIP   The game compiles to version 3 (z3). You lose the following:
 ;"Determines if there should be blank lines between DESC, ITEMS & EXITS"
 <CONSTANT COMPACT-ROOM-DESC <>>
 
+;"Sets on wich row the split line should be start. If there during the game is to few lines the game will
+  add new lines to the upper area lines. Note that if you set COMPACT-ROOM-DESC the actual split line is decreased by 3."
+<GLOBAL STARTING-SPLITROW 8>
+
 ;"Determines in wich order room descriptions should print
     0   DESC, ITEMS, EXITS
     1   DESC, EXITS, ITEMS"
 <CONSTANT ROOM-DESC-ORDER 0>
+
+;"Sets if an exitless room should print 'Obvious exits: none' or nothing. The same with items."
+<CONSTANT PRINT-NONE-WHEN-NO-EXITS T>
+<CONSTANT PRINT-NONE-WHEN-NO-ITEMS T>
 
 ;"Set the standard messages you want for the game."
 <CONSTANT MSG-INTRO 
@@ -90,9 +102,23 @@ sure you'll be a good adventurer and figure these things out.|
 <CONSTANT MSG-DONT-CARRY-IT "I'm not carrying it.">
 <CONSTANT MSG-OK "OK">
 <CONSTANT MSG-LIGHT-HAS-RUN-OUT "Light has run out!">
-<CONSTANT MSG-LIGHTS-OUT-WARNING "Light is growing dim.">
+<CONSTANT MSG-LIGHTS-OUT-WARNING-1 "Light runs out in ">
+<CONSTANT MSG-LIGHTS-OUT-WARNING-2 " turns!">                                   ;"If this msg have text then #turn until light run is printed + this text"
+<CONSTANT MSG-WHEN-NO-EXITS-ITEMS "none.">
+<CONSTANT MSG-SCORE-1 "I've stored ">
+<CONSTANT MSG-SCORE-2 " treasures. On a scale of 0 to 100 that rates ">         ;"If this msg have text then #stored treasures is printed + this text"
+<CONSTANT MSG-SCORE-3 ".">                                                      ;"If this msg have text then total percentage is printed + this text"
+<CONSTANT MSG-WINNING "Well done.">
+<CONSTANT MSG-LOAD-FAILED "Load failed.">
+<CONSTANT MSG-SAVE-FAILED "Save failed.">
 
-;"In this table you paste the *.dat or *.sck file. For example the output
+;"==========================================================================
+  =                                                                        =
+  =  Paste your data from the *.dat or *.sao in this table.                =
+  =                                                                        =
+  =========================================================================="
+
+;"In this table you paste the *.dat or *.sao file. For example the output
   from Mike Taylors ScottKit https://github.com/MikeTaylor/scottkit"
 <CONSTANT GAME-DAT <TABLE
  5953 
