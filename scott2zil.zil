@@ -242,7 +242,8 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 				<SET STORED-TREASURES <+ .STORED-TREASURES 1>>
 			)>
 		>
-		<SETG SCORE </ <* .STORED-TREASURES 100> ,TOTAL-TREASURES>>
+		<COND (<NOT <0? ,TOTAL-TREASURES>> <SETG SCORE </ <* .STORED-TREASURES 100> ,TOTAL-TREASURES>>)>
+		
 
 		<RUN-ACTIONS .VERB-ID .NOUN-ID>			;"Chek if possible AUT-actions needs to run"
 
