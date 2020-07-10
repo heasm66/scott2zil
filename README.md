@@ -10,9 +10,10 @@ Scott2Zil is a tool that takes a data-file for a game in the Scott Adams-style g
 * Jason Compton, the author of Ghost King, the game that led me down this path... (https://ifdb.tads.org/viewgame?id=pv6hkqi34nzn1tdy)
 
 ## scott2zil is tested with the following games:
- - 01 Adventureland
- - 02 Pirate Adventure
- - 03 Mission Impossible
+ - 01  Adventureland
+ - 02  Pirate Adventure
+ - 03  Mission Impossible
+ - 14b Buckaroo Banzai
  - Ghost King
 
 # Manual
