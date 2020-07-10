@@ -13,11 +13,7 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this file. If not, see <https://www.gnu.org/licenses/>."
 
-<VERSION?
-    (ZIP)
-    (ELSE)>
-
-<CONSTANT RELEASEID 4>
+<CONSTANT RELEASEID 5>
 
 ;"Insert the gamedata-file"
 <INSERT-FILE "game-dat">
@@ -42,7 +38,7 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 <CONSTANT ROOM-INVENTORY -1>
 <CONSTANT COUNTER-TIME-LIMIT 8>
 
-<CONSTANT ABREVIATIONS 
+<CONSTANT ABBREVIATIONS 
 	<TABLE 
 		<STRING-TO-TABLE "go north">
 		<STRING-TO-TABLE "go south">
@@ -124,7 +120,7 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 
 		;"Replace n, s, e, w, u, d, l & i with go north, go south, ..."
 		<COND (<AND <=? .NUMBER-OF-WORDS 1> <=? .WLEN 1>>
-			<CHECK-ABREVIATIONS .LOOP-START>
+			<CHECK-ABBREVIATIONS .LOOP-START>
 			<SET NUMBER-OF-WORDS <GETB ,PARSEBUF 1>> ;"reread number of parsed words"
 		)>
 
@@ -861,6 +857,7 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 	<COND (<GET-FLAG ,FLAG-DARK>
 		<COND (<NOT <OR <=? <GET-ITEM-LOC ,LIGHT-SOURCE-ID> ,ROOM-INVENTORY>  <=? <GET-ITEM-LOC ,LIGHT-SOURCE-ID> ,CURRENT-ROOM>>>
 			<TELL ,MSG-TOO-DARK-TO-SEE CR>
+			<COND (<NOT ,GAME-CONVERSATIONAL> <TELL CR>)>		;"Extra CR"
 			<RETURN>
 		 )>
 	)>
@@ -935,16 +932,16 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 	)>
 >
 
-<ROUTINE CHECK-ABREVIATIONS (POS) 
+<ROUTINE CHECK-ABBREVIATIONS (POS) 
 	;"Abreviation if one word of one character. Put new command in READBUF and reparse."
-	<COND (<=? <GETB ,READBUF .POS> !\n> <REPARSE <GET ,ABREVIATIONS 0>>)>
-	<COND (<=? <GETB ,READBUF .POS> !\s> <REPARSE <GET ,ABREVIATIONS 1>>)>
-	<COND (<=? <GETB ,READBUF .POS> !\e> <REPARSE <GET ,ABREVIATIONS 2>>)>
-	<COND (<=? <GETB ,READBUF .POS> !\w> <REPARSE <GET ,ABREVIATIONS 3>>)>
-	<COND (<=? <GETB ,READBUF .POS> !\u> <REPARSE <GET ,ABREVIATIONS 4>>)>
-	<COND (<=? <GETB ,READBUF .POS> !\d> <REPARSE <GET ,ABREVIATIONS 5>>)>
-	<COND (<=? <GETB ,READBUF .POS> !\l> <REPARSE <GET ,ABREVIATIONS 6>>)>
-	<COND (<=? <GETB ,READBUF .POS> !\i> <REPARSE <GET ,ABREVIATIONS 7>>)>
+	<COND (<=? <GETB ,READBUF .POS> !\n> <REPARSE <GET ,ABBREVIATIONS 0>>)>
+	<COND (<=? <GETB ,READBUF .POS> !\s> <REPARSE <GET ,ABBREVIATIONS 1>>)>
+	<COND (<=? <GETB ,READBUF .POS> !\e> <REPARSE <GET ,ABBREVIATIONS 2>>)>
+	<COND (<=? <GETB ,READBUF .POS> !\w> <REPARSE <GET ,ABBREVIATIONS 3>>)>
+	<COND (<=? <GETB ,READBUF .POS> !\u> <REPARSE <GET ,ABBREVIATIONS 4>>)>
+	<COND (<=? <GETB ,READBUF .POS> !\d> <REPARSE <GET ,ABBREVIATIONS 5>>)>
+	<COND (<=? <GETB ,READBUF .POS> !\l> <REPARSE <GET ,ABBREVIATIONS 6>>)>
+	<COND (<=? <GETB ,READBUF .POS> !\i> <REPARSE <GET ,ABBREVIATIONS 7>>)>
 >
 
 ;"=====================================================================================
