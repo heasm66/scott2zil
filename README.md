@@ -13,6 +13,7 @@ Scott2Zil is a tool that takes a data-file for a game in the Scott Adams-style g
  - 01  Adventureland
  - 02  Pirate Adventure
  - 03  Mission Impossible
+ - 12  The Golden Voyage
  - 14b Buckaroo Banzai
  - Ghost King
 
