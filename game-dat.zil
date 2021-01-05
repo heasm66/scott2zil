@@ -54,6 +54,16 @@ ZIP   The game compiles to version 3 (z3). You lose the following:
   add new lines to the upper area lines. Note that if you set COMPACT-ROOM-DESC the actual split line is decreased by 3."
 <GLOBAL STARTING-SPLITROW 8>
 
+;"Sets if AutoGet/Drop should be handled as defined in 'The Adventure System' manual or handled as in ScottFree
+  THE ADVENTURE SYSTEM
+    If a verb-noun match was found in at least one action entry, but the conditions were not true in any of the 
+    matched actions, then the message 'I can’t do that…yet' is displayed after all of the action entries have 
+    been checked.
+    AutoGet/Drop is only called if there is no verb-noun match found.
+  ScottFree
+    Does the same as above but tries to do an AutoGet/Drop before the message 'I can’t do that…yet'."
+<CONSTANT AUTOGET-AS-SCOTTFREE <>>
+
 ;"Determines in wich order room descriptions should print
     0   DESC, ITEMS, EXITS
     1   DESC, EXITS, ITEMS"
