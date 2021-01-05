@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this file. If not, see <https://www.gnu.org/licenses/>."
 
 
-<CONSTANT RELEASEID 5>
+<CONSTANT RELEASEID 6>
 
 ;"Insert the gamedata-file"
 <INSERT-FILE "game-dat">
@@ -326,8 +326,10 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 
 	<COND (.WORD-ACTION-DONE <RETURN>)>
 
-	<COND (<HANDLE-GET-DROP .VERB-ID .NOUN-ID> <RETURN>)>
-
+	<COND (<OR <NOT .FOUND-WORD> ,AUTOGET-AS-SCOTTFREE>
+		<COND (<HANDLE-GET-DROP .VERB-ID .NOUN-ID> <RETURN>)>
+	)>
+	
 	<COND (.FOUND-WORD
 		<TELL ,MSG-CANT-DO-THAT-YET CR>
 	)
