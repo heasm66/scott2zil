@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this file. If not, see <https://www.gnu.org/licenses/>."
 
 
-<CONSTANT RELEASEID 6>
+<CONSTANT RELEASEID 7>
 
 ;"Insert the gamedata-file"
 <INSERT-FILE "game-dat">
@@ -757,26 +757,28 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 	<RETURN <GET-CONDITION-ARG .ID <- ,INSTRUCTION-ARG-INDEX 1>>>	;"but RTRUEhe old pointers argument"
 >
 
-<ROUTINE HANDLE-GET-DROP (VERB-ID NOUN-ID "AUX" ITEM-ID NOUN ITEM-NOUN SEARCH-LOC)
+<ROUTINE HANDLE-GET-DROP (VERB-ID NOUN-ID "AUX" ITEM-ID NOUN ITEM-NOUN SEARCH-LOC ITEM-NOUN-MATCH)
 	;"Exit if the verb isn't get or drop"
 	<COND (<AND <NOT <=? .VERB-ID ,VERB-GET>> <NOT <=? .VERB-ID ,VERB-DROP>>> <RFALSE>)>
-
-	;"If noun is undefined, return with an error text"
-	<COND (<=? .NOUN-ID 0> <TELL ,MSG-WHAT CR> <RTRUE>)>
 
 	;"If verb is get then search for an item in the room. If verb is drop then search for item in inventory."
 	<COND (<=? .VERB-ID ,VERB-GET> <SET SEARCH-LOC ,CURRENT-ROOM>)(ELSE <SET SEARCH-LOC ,ROOM-INVENTORY>)>
 
 	;"Search for noun among items (the /XXX/ part)"
 	<SET ITEM-ID -1>
+	<SET ITEM-NOUN-MATCH <>>
 	<SET NOUN <GET <GET ,VOCABULARY-TABLE .NOUN-ID> 2>>  ;"Current noun"
+	<COND (<=? .NOUN-ID 0> <SET NOUN ,SA-NOUN>)> ;"If noun not in vocabulary, try parser-noun against items"
 	<DO (I 0 ,NUMBER-ITEMS)
 		<SET ITEM-NOUN <GET <GET ,ITEMS-TABLE .I> 5>>
+		<COND (<WORD-EQUAL? .NOUN .ITEM-NOUN> <SET ITEM-NOUN-MATCH T>)>	;"Found noun in vocabulary or item"
 		<COND (<AND <=? <GET-ITEM-LOC .I> .SEARCH-LOC> <WORD-EQUAL? .NOUN .ITEM-NOUN>>	;"Is the item in room or inventory and have a matching noun?"
 			<SET ITEM-ID .I>
 		)>
 	>
-	<COND (<=? .ITEM-ID -1> <TELL ,MSG-WHAT CR> <RTRUE>)>
+
+	;"If noun is undefined, return with an error text"
+	<COND (<AND <=? .NOUN-ID 0> <NOT .ITEM-NOUN-MATCH>> <TELL ,MSG-WHAT CR> <RTRUE>)>
 
 	;"GET"
 	<COND (<=? .VERB-ID ,VERB-GET>
@@ -981,7 +983,7 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
 Scott2Zil is a tool that takes a data-file for a game in |
 the Scott Adams-style genre (games that can be played with|
 for example ScottFree or PerlScott) and repackage it inside|
-a ZIL-shell that can be compiled with ZILF to and independed|
+a ZIL-shell that can be compiled with ZILF to and independent|
 z5-game.|
 |
 Thanks to:|
