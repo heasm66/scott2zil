@@ -4,7 +4,7 @@ Tool for creating converting a SA-game dat-file to ZIL that compiles with ZILF.
 Scott2Zil is a tool that takes a data-file for a game in the Scott Adams-style genre (games that can be played with for example ScottFree or PerlScott) and repackage it inside a ZIL-shell that can be compiled with ZILF to and independed z5-game.
 
 ## Thanks to:
-* Jesse McGrew, the creator of ZILF. (https://bitbucket.org/jmcgrew/zilf/wiki/Home)
+* Tara McGrew, the creator of ZILF. (https://foss.heptapod.net/zilf/zilf)
 * pdxiv, the creator of PerlScott for inspiration and code that is much more readable than the original basic interpreter by Scott Adams. (https://github.com/pdxiv/PerlScott)
 * Mike Taylor, the creator of scottkit. A tool for compile and decompile games in the SA genre. (https://github.com/MikeTaylor/scottkit)
 * Jason Compton, the author of Ghost King, the game that led me down this path... (https://ifdb.tads.org/viewgame?id=pv6hkqi34nzn1tdy)
