@@ -987,7 +987,7 @@ a ZIL-shell that can be compiled with ZILF to and independent|
 z5-game.|
 |
 Thanks to:|
- - Jesse McGrew, the creator of ZILF.|
+ - Tara McGrew, the creator of ZILF.|
  - pdxiv, the creator of PerlScott for inspiration and code|
    that is much more readable than the original|
    basic interpreter by Scott Adams.|
