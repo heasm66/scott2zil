@@ -11,10 +11,10 @@ rem General Public License for more details.
 rem You should have received a copy of the GNU General Public License
 rem along with this file. If not, see <https://www.gnu.org/licenses/>."
 echo on
-..\..\..\Source\ZIL\ZILF\zilf-0.9.0-win-x64\bin\zilf.exe -w scott2zil.zil
-..\..\..\Source\ZIL\ZILF\zilf-0.9.0-win-x64\bin\Zapf.exe -ab scott2zil.zap > scott2zil_freq.xzap
+zilf.exe -w scott2zil.zil
+Zapf.exe -ab scott2zil.zap > scott2zil_freq.xzap
 del scott2zil_freq.zap
-..\..\..\Source\ZIL\ZILF\zilf-0.9.0-win-x64\bin\Zapf.exe scott2zil.zap
+Zapf.exe scott2zil.zap
 del /F /Q bin\*.*
 del /F /Q zapf\*.*
 move *.zap zapf\
