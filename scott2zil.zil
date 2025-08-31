@@ -1,17 +1,27 @@
-;"Copyright (C) 2020 heasm66
-You can redistribute and/or modify this file under the terms of the
-GNU General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any
-later version.
-This file is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with this file. If not, see <https://www.gnu.org/licenses/>."
+;"MIT License
+
+Copyright (c) 2020-2025 Henrik Åsman
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the 'Software'), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE."
 
 
-<CONSTANT RELEASEID 8>
+<CONSTANT RELEASEID 9>
 
 ;"Insert the gamedata-file"
 <INSERT-FILE "game-dat">
@@ -310,7 +320,8 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
                     <COND (<OR <0? .ACTION-NOUN-ID> <=? .ACTION-NOUN-ID .NOUN-ID>>
                         <SET FOUND-WORD T>
                         <COND (<EVALUATE-CONDITIONS .I>
-                            <EXECUTE-COMMANDS .I>
+                            <COND (<NOT <HANDLE-GET-DROP .VERB-ID .NOUN-ID T>>     ;"Try GET/DROP"
+                                <EXECUTE-COMMANDS .I>)>
                             <SET .WORD-ACTION-DONE T>
                             <COND (<NOT ,CONTINUE-FLAG> <RETURN>)>
                         )>
@@ -325,7 +336,7 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
     <COND (.WORD-ACTION-DONE <RETURN>)>
 
     <COND (<OR <NOT .FOUND-WORD> ,AUTOGET-AS-SCOTTFREE>
-        <COND (<HANDLE-GET-DROP .VERB-ID .NOUN-ID> <RETURN>)>
+        <COND (<HANDLE-GET-DROP .VERB-ID .NOUN-ID <>> <RETURN>)>
     )>
 
     <COND (.FOUND-WORD
@@ -757,7 +768,7 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
     <RETURN <GET-CONDITION-ARG .ID <- ,INSTRUCTION-ARG-INDEX 1>>>   ;"but RTRUEhe old pointers argument"
 >
 
-<ROUTINE HANDLE-GET-DROP (VERB-ID NOUN-ID "AUX" ITEM-ID NOUN ITEM-NOUN SEARCH-LOC ITEM-NOUN-MATCH ITEM-IN-INV)
+<ROUTINE HANDLE-GET-DROP (VERB-ID NOUN-ID TRY? "AUX" ITEM-ID NOUN ITEM-NOUN SEARCH-LOC ITEM-NOUN-MATCH ITEM-IN-INV)
     ;"Exit if the verb isn't get or drop"
     <COND (<AND <NOT <=? .VERB-ID ,VERB-GET>> <NOT <=? .VERB-ID ,VERB-DROP>>> <RFALSE>)>
 
@@ -769,7 +780,6 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
     <SET ITEM-NOUN-MATCH <>>
     <SET ITEM-IN-INV <>>
     <SET NOUN <GET <GET ,VOCABULARY-TABLE .NOUN-ID> 2>>  ;"Current noun"
-    ;"<COND (<=? .NOUN-ID 0> <SET NOUN ,SA-NOUN>)>" ;"If noun not in vocabulary, try parser-noun against items"
     <DO (I 0 ,NUMBER-ITEMS)
         <SET ITEM-NOUN <GET <GET ,ITEMS-TABLE .I> 5>>
         <COND (<WORD-EQUAL? .NOUN .ITEM-NOUN> <SET ITEM-NOUN-MATCH T>)>                                             ;"Found noun in vocabulary or item"
@@ -777,13 +787,16 @@ along with this file. If not, see <https://www.gnu.org/licenses/>."
         <COND (<AND <=? <GET-ITEM-LOC .I> .SEARCH-LOC> <WORD-EQUAL? .NOUN .ITEM-NOUN>> <SET ITEM-ID .I>)>           ;"Is the item in room or inventory and have a matching noun?"
     >
 
+    ;"If noun doesn't match item, return false if TRY? is true (don't print any message)"
+    <COND (<AND <NOT .ITEM-NOUN-MATCH> .TRY?> <RFALSE>)>
+
     ;"If noun is undefined, return with an error text"
     <COND (<AND <=? .NOUN-ID 0> <NOT .ITEM-NOUN-MATCH>> <TELL ,MSG-WHAT CR> <RTRUE>)>
 
     ;"GET"
     <COND (<=? .VERB-ID ,VERB-GET>
-        ;"Item in inventory?"
-        <COND (.ITEM-IN-INV <TELL ,MSG-ALREADY-HAVE-IT CR> <RTRUE>)>
+        ;"Item in inventory (but not item with similiar name in room)?"
+        <COND (<AND <NOT <=? <GET-ITEM-LOC .ITEM-ID> ,CURRENT-ROOM>> .ITEM-IN-INV> <TELL ,MSG-ALREADY-HAVE-IT CR> <RTRUE>)>
 
         ;"Item in room?"
         <COND (<NOT <=? <GET-ITEM-LOC .ITEM-ID> ,CURRENT-ROOM>> <TELL ,MSG-DONT-SEE-IT-HERE CR> <RTRUE>)>

@@ -11,7 +11,7 @@ rem General Public License for more details.
 rem You should have received a copy of the GNU General Public License
 rem along with this file. If not, see <https://www.gnu.org/licenses/>."
 echo on
-zilf.exe -w scott2zil.zil
+zilf.exe -w -d scott2zil.zil
 Zapf.exe -ab scott2zil.zap > scott2zil_freq.xzap
 del scott2zil_freq.zap
 Zapf.exe scott2zil.zap
