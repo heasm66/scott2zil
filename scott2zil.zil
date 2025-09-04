@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."
 
 
-<CONSTANT RELEASEID 9>
+<CONSTANT RELEASEID 10>
 
 ;"Insert the gamedata-file"
 <INSERT-FILE "game-dat">
@@ -55,7 +55,7 @@ SOFTWARE."
         <STRING-TO-TABLE "go up">
         <STRING-TO-TABLE "go down">
         <STRING-TO-TABLE "look">
-        <STRING-TO-TABLE "take inventory">
+        <STRING-TO-TABLE "inventory">
     >
 >
 <CONSTANT SPECIAL-COMMANDS
@@ -224,11 +224,11 @@ SOFTWARE."
             <PUT ,ALTERNATE-COUNTER ,COUNTER-TIME-LIMIT <- <GET ,ALTERNATE-COUNTER ,COUNTER-TIME-LIMIT> 1>>
 
             <COND (<L? <GET ,ALTERNATE-COUNTER ,COUNTER-TIME-LIMIT> 0>
-                <TELL ,MSG-LIGHT-HAS-RUN-OUT CR>
+                <COND (<ITEM-HERE? ,LIGHT-SOURCE-ID> <TELL ,MSG-LIGHT-HAS-RUN-OUT CR>)>
                 <SET-ITEM-LOC ,LIGHT-SOURCE-ID 0>
             )
             (ELSE
-                <COND (<L=? <GET ,ALTERNATE-COUNTER ,COUNTER-TIME-LIMIT> ,LIGHT-WARNING-THRESHOLD>
+                <COND (<AND <ITEM-HERE? ,LIGHT-SOURCE-ID> <L=? <GET ,ALTERNATE-COUNTER ,COUNTER-TIME-LIMIT> ,LIGHT-WARNING-THRESHOLD>>
                     <TELL ,MSG-LIGHTS-OUT-WARNING-1>
                     <COND (<NOT <=? ,MSG-LIGHTS-OUT-WARNING-2 "">>
                         <TELL N <GET ,ALTERNATE-COUNTER ,COUNTER-TIME-LIMIT> ,MSG-LIGHTS-OUT-WARNING-2>
@@ -320,7 +320,7 @@ SOFTWARE."
                     <COND (<OR <0? .ACTION-NOUN-ID> <=? .ACTION-NOUN-ID .NOUN-ID>>
                         <SET FOUND-WORD T>
                         <COND (<EVALUATE-CONDITIONS .I>
-                            <COND (<NOT <HANDLE-GET-DROP .VERB-ID .NOUN-ID T>>     ;"Try GET/DROP"
+                            <COND (<OR ,AUTOGET-AS-SCOTTFREE <NOT <HANDLE-GET-DROP .VERB-ID .NOUN-ID T>>>     ;"Try GET/DROP"
                                 <EXECUTE-COMMANDS .I>)>
                             <SET .WORD-ACTION-DONE T>
                             <COND (<NOT ,CONTINUE-FLAG> <RETURN>)>
@@ -1129,3 +1129,9 @@ Thanks to:|
             <HLIGHT 0>
         >
     )>
+
+    <ROUTINE ITEM-HERE? (ITEM)
+        <COND (<=? <GET-ITEM-LOC .ITEM> ,CURRENT-ROOM> <RTRUE>)>
+        <COND (<=? <GET-ITEM-LOC .ITEM> ,ROOM-INVENTORY> <RTRUE>)>
+        <RFALSE>
+    >
