@@ -54,8 +54,6 @@ SOFTWARE."
         <STRING-TO-TABLE "go west">
         <STRING-TO-TABLE "go up">
         <STRING-TO-TABLE "go down">
-        <STRING-TO-TABLE "look">
-        <STRING-TO-TABLE "inventory">
     >
 >
 <CONSTANT SPECIAL-COMMANDS
@@ -90,6 +88,8 @@ SOFTWARE."
 <GLOBAL CURPOS <TABLE 0 0>>
 
 <GLOBAL ROOM-DESC-PRINTED? <>>      ;"Flag to assure that room-desc only prints once every cycle"
+
+<GLOBAL AUTOGET-DISABLED? <>>
 
 ;"The game-loop starts here"
 <ROUTINE GO ()
@@ -133,7 +133,7 @@ SOFTWARE."
             <SET NUMBER-OF-WORDS <GETB ,PARSEBUF 1>> ;"reread number of parsed words"
         )>
 
-        ;"Put the first word in SA-VERB and (if exists) the second word   in SA-NOUN. If there is more
+        ;"Put the first word in SA-VERB and (if exists) the second word   in SA-NOUN. If there are more
         than two words (or no words) both tables are left blank."
         <COND (<AND <L=? .NUMBER-OF-WORDS 2> <G=? .NUMBER-OF-WORDS 1>>
             ;"Word 1 --> SA-VERB (up to 9 chars)"
@@ -174,6 +174,26 @@ SOFTWARE."
         <COND (<AND <WORD-EQUAL? ,SA-VERB <GET ,SPECIAL-COMMANDS 4>> <WORD-EQUAL? ,SA-NOUN <GET ,SPECIAL-COMMANDS 1>>>
             <ABOUT>
             <AGAIN>
+        )>
+
+        ;"replace verb abbreviations"
+        <COND (<=? <GETB ,PARSEBUF 4> 1>
+            <COND (<=? <GETB ,SA-VERB 0> !\g> 
+                <PUTB ,SA-VERB 0 !\a> <PUTB ,SA-VERB 1 !\g> <PUTB ,SA-VERB 2 !\a>
+                <PUTB ,SA-VERB 4 !\i> <PUTB ,SA-VERB 5 !\n>)>
+            <COND (<=? <GETB ,SA-VERB 0> !\i> 
+                <PUTB ,SA-VERB 1 !\n> <PUTB ,SA-VERB 2 !\v> <PUTB ,SA-VERB 3 !\e>
+                <PUTB ,SA-VERB 4 !\n> <PUTB ,SA-VERB 5 !\t> <PUTB ,SA-VERB 6 !\o>
+                <PUTB ,SA-VERB 7 !\r> <PUTB ,SA-VERB 8 !\y>)>
+            <COND (<=? <GETB ,SA-VERB 0> !\l> 
+                <PUTB ,SA-VERB 1 !\o> <PUTB ,SA-VERB 2 !\o> <PUTB ,SA-VERB 3 !\k>)>
+            <COND (<=? <GETB ,SA-VERB 0> !\x> 
+                <PUTB ,SA-VERB 0 !\e> <PUTB ,SA-VERB 1 !\x> <PUTB ,SA-VERB 2 !\a>
+                <PUTB ,SA-VERB 4 !\m> <PUTB ,SA-VERB 5 !\i> <PUTB ,SA-VERB 6 !\n>
+                <PUTB ,SA-VERB 7 !\e>)>
+            <COND (<=? <GETB ,SA-VERB 0> !\z> 
+                <PUTB ,SA-VERB 0 !\w> <PUTB ,SA-VERB 1 !\a> <PUTB ,SA-VERB 2 !\i>
+                <PUTB ,SA-VERB 4 !\t>)>
         )>
 
         ;"Identify verb and noun"
@@ -262,9 +282,7 @@ SOFTWARE."
 
     ;"Handle GO [direction]"
     <COND (<AND <=? .VERB-ID ,VERB-GO> <L=? .NOUN-ID ,DIRECTION-NOUNS>>
-        <SET ROOM-DARK <AND <GET-FLAG ,FLAG-DARK>
-                            <NOT <=? <GET-ITEM-LOC ,LIGHT-SOURCE-ID> ,CURRENT-ROOM>>
-                            <NOT <=? <GET-ITEM-LOC ,LIGHT-SOURCE-ID> ,ROOM-INVENTORY>>>>
+        <SET ROOM-DARK <IS-CURRENT-ROOM-DARK?>>
         <COND (.ROOM-DARK <TELL ,MSG-DANGEROUS-TO-MOVE CR>)>
 
         <COND (<0? .NOUN-ID> <TELL ,MSG-MISSING-DIRECTION CR> <RETURN>)>
@@ -768,10 +786,48 @@ SOFTWARE."
     <RETURN <GET-CONDITION-ARG .ID <- ,INSTRUCTION-ARG-INDEX 1>>>   ;"but RTRUEhe old pointers argument"
 >
 
-<ROUTINE HANDLE-GET-DROP (VERB-ID NOUN-ID TRY? "AUX" ITEM-ID NOUN ITEM-NOUN SEARCH-LOC ITEM-NOUN-MATCH ITEM-IN-INV)
+<ROUTINE HANDLE-GET-DROP (VERB-ID NOUN-ID TRY? "AUX" ITEM-ID NOUN ITEM-NOUN SEARCH-LOC ITEM-NOUN-MATCH ITEM-IN-INV (ITEM-HANDLED? <>))
     ;"Exit if the verb isn't get or drop"
     <COND (<AND <NOT <=? .VERB-ID ,VERB-GET>> <NOT <=? .VERB-ID ,VERB-DROP>>> <RFALSE>)>
 
+    ;"Don't recurse GET when GET ALL" 
+    <COND (,AUTOGET-DISABLED? <RETURN>)>
+    
+    ;"GET/DROP ALL allowed?"
+    <COND (<AND ,GET-DROP-ALL-ALLOWED? <=? <GETB ,SA-NOUN 0> !\a> <=? <GETB ,SA-NOUN 1> !\l> <=? <GETB ,SA-NOUN 2> !\l>>
+        ;"GET ALL"
+        <COND (<=? .VERB-ID ,VERB-GET> 
+            <COND (<IS-CURRENT-ROOM-DARK?> <TELL ,MSG-TOO-DARK-TO-SEE CR> <RTRUE>)>
+            <DO (I 0 ,NUMBER-ITEMS)
+                <SET ITEM-NOUN <GET <GET ,ITEMS-TABLE .I> 5>>
+                <COND (<AND <=? <GET-ITEM-LOC .I> ,CURRENT-ROOM> <NOT <0? <GETB .ITEM-NOUN 0>>>>        ;"Here and AutoGet"
+                    <SETG AUTOGET-DISABLED? T>
+                    <RUN-ACTIONS .VERB-ID .I>                                                           ;"Get the item (run through actions for noun)"
+                    <SETG AUTOGET-DISABLED? <>>
+                    <COND (<NOT <CAN-CARRY-MORE?>> <RTRUE>)>                                            ;"Can I carry one more item?"
+                    <SET-ITEM-LOC .I ,ROOM-INVENTORY>                                                   ;"Get the item"
+                    <TELL <GET-ITEM-DESC .I> ": " ,MSG-OK CR>
+                    <SET ITEM-HANDLED? T>
+                )>
+            >
+            <COND (<NOT .ITEM-HANDLED?> <TELL ,MSG-NOTHING-TAKEN CR>)>
+            <RTRUE>
+        )>
+        ;"DROP ALL"
+        <COND (<=? .VERB-ID ,VERB-DROP> 
+            <DO (I 0 ,NUMBER-ITEMS)
+                <SET ITEM-NOUN <GET <GET ,ITEMS-TABLE .I> 5>>
+                <COND (<AND <=? <GET-ITEM-LOC .I> ,ROOM-INVENTORY> <NOT <0? <GETB .ITEM-NOUN 0>>>>      ;"Carried and AutoGet"
+                    <SET-ITEM-LOC .I ,CURRENT-ROOM>                                                     ;"Drop the item"
+                    <TELL <GET-ITEM-DESC .I> ": " ,MSG-OK CR>
+                    <SET ITEM-HANDLED? T>
+                )>
+            >
+            <COND (<NOT .ITEM-HANDLED?> <TELL ,MSG-NOTHING-DROPPED CR>)>
+            <RTRUE>
+        )>
+    )>
+    
     ;"If verb is get then search for an item in the room. If verb is drop then search for item in inventory."
     <COND (<=? .VERB-ID ,VERB-GET> <SET SEARCH-LOC ,CURRENT-ROOM>)(ELSE <SET SEARCH-LOC ,ROOM-INVENTORY>)>
 
@@ -875,12 +931,10 @@ SOFTWARE."
 
 <ROUTINE PRINT-ROOM-DESC ()
     ;"Dark?"
-    <COND (<GET-FLAG ,FLAG-DARK>
-        <COND (<NOT <OR <=? <GET-ITEM-LOC ,LIGHT-SOURCE-ID> ,ROOM-INVENTORY>  <=? <GET-ITEM-LOC ,LIGHT-SOURCE-ID> ,CURRENT-ROOM>>>
-            <TELL ,MSG-TOO-DARK-TO-SEE CR>
-            <COND (<NOT ,GAME-CONVERSATIONAL> <TELL CR>)>       ;"Extra CR"
-            <RETURN>
-         )>
+    <COND (<IS-CURRENT-ROOM-DARK?>
+        <TELL ,MSG-TOO-DARK-TO-SEE CR>
+        <COND (<NOT ,GAME-CONVERSATIONAL> <TELL CR>)>       ;"Extra CR"
+        <RETURN>
     )>
 
     ;"Show room message"
@@ -888,8 +942,9 @@ SOFTWARE."
     <COND (<NOT <GET-ROOM-DESC-SUPPRESS ,CURRENT-ROOM>>
         <TELL ,MSG-IM-IN-A>
     )>
-    <TELL <GET-ROOM-DESC ,CURRENT-ROOM> CR>
-
+    <TELL <GET-ROOM-DESC ,CURRENT-ROOM>>
+    <COND (,PRINT-DOT-AFTER-DESC <TELL ".">)>
+    <CRLF>
     <COND (<0? ,ROOM-DESC-ORDER>
         <PRINT-ROOM-ITEMS>
         <PRINT-ROOM-EXITS>
@@ -937,16 +992,17 @@ SOFTWARE."
         <DO (I 1 6)
             <COND (<G? <GET-ROOM-EXIT ,CURRENT-ROOM .I> 0>
                 <COND (<NOT .FIRST-EXIT> <TELL ,CHARS-BETWEEN-EXITS>)>
-                <COND (<=? .I 1> <TELL "North">)>
-                <COND (<=? .I 2> <TELL "South">)>
-                <COND (<=? .I 3> <TELL "East">)>
-                <COND (<=? .I 4> <TELL "West">)>
-                <COND (<=? .I 5> <TELL "Up">)>
-                <COND (<=? .I 6> <TELL "Down">)>
+                <COND (<=? .I 1> <COND (,PRINT-EXITS-IN-UCASE <TELL "NORTH">) (ELSE <TELL "North">)>)>
+                <COND (<=? .I 2> <COND (,PRINT-EXITS-IN-UCASE <TELL "SOUTH">) (ELSE <TELL "South">)>)>
+                <COND (<=? .I 3> <COND (,PRINT-EXITS-IN-UCASE <TELL "EAST">) (ELSE <TELL "East">)>)>
+                <COND (<=? .I 4> <COND (,PRINT-EXITS-IN-UCASE <TELL "WEST">) (ELSE <TELL "West">)>)>
+                <COND (<=? .I 5> <COND (,PRINT-EXITS-IN-UCASE <TELL "UP">) (ELSE <TELL "Up">)>)>
+                <COND (<=? .I 6> <COND (,PRINT-EXITS-IN-UCASE <TELL "DOWN">) (ELSE <TELL "Down">)>)>
                 <SET FIRST-EXIT <>>
             )>
         >
-        <TELL "." CR>
+    <COND (,PRINT-DOT-AFTER-EXITS <TELL ".">)>
+    <CRLF>
     )>
     <COND (<AND <NOT .EXIT-FOUND> ,PRINT-NONE-WHEN-NO-EXITS>
         <COND (<NOT ,COMPACT-ROOM-DESC> <TELL CR>)>
@@ -962,8 +1018,6 @@ SOFTWARE."
     <COND (<=? <GETB ,READBUF .POS> !\w> <REPARSE <GET ,ABBREVIATIONS 3>>)>
     <COND (<=? <GETB ,READBUF .POS> !\u> <REPARSE <GET ,ABBREVIATIONS 4>>)>
     <COND (<=? <GETB ,READBUF .POS> !\d> <REPARSE <GET ,ABBREVIATIONS 5>>)>
-    <COND (<=? <GETB ,READBUF .POS> !\l> <REPARSE <GET ,ABBREVIATIONS 6>>)>
-    <COND (<=? <GETB ,READBUF .POS> !\i> <REPARSE <GET ,ABBREVIATIONS 7>>)>
 >
 
 ;"=====================================================================================
@@ -1134,4 +1188,10 @@ Thanks to:|
         <COND (<=? <GET-ITEM-LOC .ITEM> ,CURRENT-ROOM> <RTRUE>)>
         <COND (<=? <GET-ITEM-LOC .ITEM> ,ROOM-INVENTORY> <RTRUE>)>
         <RFALSE>
+    >
+
+    <ROUTINE IS-CURRENT-ROOM-DARK? ()
+        <AND <GET-FLAG ,FLAG-DARK>
+             <NOT <=? <GET-ITEM-LOC ,LIGHT-SOURCE-ID> ,CURRENT-ROOM>>
+             <NOT <=? <GET-ITEM-LOC ,LIGHT-SOURCE-ID> ,ROOM-INVENTORY>>>
     >

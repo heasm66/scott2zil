@@ -52,9 +52,9 @@ ZIP   The game compiles to version 3 (z3). You lose the following:
 ;"Determines if the instruction '70 CLS - clear' should clear screen or be ignored. In conversational mode it is always ignored."
 <CONSTANT NO-CLS T>
 
-;"Determines (in conversational):
-    <>  Brief mode. Only print full room description on first visit
-    T   Verbose mode. Always print full room description"
+;"Allow the player to change game mode between classic/conversational:
+    <>  No
+    T   Yes"
 <GLOBAL CAN-PLAYER-CHANGE-GAME-MODE T>
 
 ;"Determines if there should be blank lines between DESC, ITEMS & EXITS"
@@ -76,6 +76,9 @@ ZIP   The game compiles to version 3 (z3). You lose the following:
   Castle Adventure needs T"
 <CONSTANT AUTOGET-AS-SCOTTFREE <>>
 
+;"Allow player to use GET/DROP ALL for all AutoGet items"
+<CONSTANT GET-DROP-ALL-ALLOWED? T>
+
 ;"Determines in wich order room descriptions should print
     0   DESC, ITEMS, EXITS
     1   DESC, EXITS, ITEMS"
@@ -87,6 +90,10 @@ ZIP   The game compiles to version 3 (z3). You lose the following:
 <CONSTANT CHARS-BETWEEN-EXITS ", ">
 <CONSTANT CHARS-BETWEEN-ITEMS " - ">
 
+;"Text formatting settings"
+<CONSTANT PRINT-DOT-AFTER-DESC T>
+<CONSTANT PRINT-DOT-AFTER-EXITS <>>
+<CONSTANT PRINT-EXITS-IN-UCASE <>>
 <CONSTANT EXTRA-NEWLINE-BEFORE-PROMPT-IN-CONVERSATIONAL? T>
 
 ;"Set the standard messages you want for the game."
@@ -188,6 +195,8 @@ ABOUT GAME.|
 <CONSTANT MSG-DONT-CARRY-IT "I'm not carrying it.">         ;"drop noun that's not in carried"
 <CONSTANT MSG-ALREADY-HAVE-IT "I already have it.">         ;"get noun that's in inventory"
 <CONSTANT MSG-TOO-MUCH-TO-CARRY "I've too much to carry!">
+<CONSTANT MSG-NOTHING-DROPPED "Nothing dropped.">
+<CONSTANT MSG-NOTHING-TAKEN "Nothing taken.">
 
 ;"The Lamp                              SCOTTLIGHT = T/<>
     Light runs out in <NUM> turns.      Light runs out in <NUM> turns.              Your light is growing dim.
