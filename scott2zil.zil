@@ -78,6 +78,7 @@ SOFTWARE."
 <GLOBAL COUNTER-REGISTER 0>
 <GLOBAL ALTERNATE-ROOM-REGISTER 0>
 <GLOBAL INSTRUCTION-ARG-INDEX 1>
+<GLOBAL NEED-TO-LOOK? <>>
 
 ;"Version 3 always has a statusline. These are for that!"
 <GLOBAL SCORE 0>
@@ -117,6 +118,8 @@ SOFTWARE."
         <DO (I 0 9) <PUTB ,SA-NOUN .I 0>>
 
         <SETG ROOM-DESC-PRINTED? <>>    ;"Clear flag"
+
+        <COND (,NEED-TO-LOOK? <PRINT-ROOM-DESC> <SETG NEED-TO-LOOK? <>>)>
 
         <COND (<AND ,EXTRA-NEWLINE-BEFORE-PROMPT-IN-CONVERSATIONAL? ,GAME-CONVERSATIONAL> <CRLF>)>
         <TELL ,MSG-PROMPT>
@@ -1150,7 +1153,8 @@ Thanks to:|
                 <CURSET 1 1>
             )>
 
-            <PRINT-ROOM-DESC>
+            <COND (,GAME-CONVERSATIONAL <SETG NEED-TO-LOOK? T>)
+                  (ELSE <PRINT-ROOM-DESC>)>
 
             ;"Overflow - Make top screen bigger"
             <COND (<NOT ,GAME-CONVERSATIONAL>
