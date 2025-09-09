@@ -31,7 +31,7 @@ SOFTWARE."
   Definition of constants and globals
   ====================================================================================="
 
-<CONSTANT SCREEN-BAR <ISTRING ,SCREEN-WIDTH !\=>>
+<CONSTANT SCREEN-BAR <ISTRING <* 5 ,SCREEN-WIDTH> ,SEPERATION-CHAR>>
 
 ;"Define global variables and constants"
 <CONSTANT FLAG-LAMP-EMPTY 16>
@@ -966,7 +966,7 @@ SOFTWARE."
     <DO (I 0 ,NUMBER-ITEMS)
         <COND (<=? <GET-ITEM-LOC .I> ,CURRENT-ROOM>
             <COND (<NOT .ITEM-FOUND>
-                <COND (<NOT ,COMPACT-ROOM-DESC> <TELL CR>)>
+                <COND (<NOT <OR ,GAME-CONVERSATIONAL ,COMPACT-ROOM-DESC>> <TELL CR>)>
                 <TELL ,MSG-VISIBLE-ITEMS-HERE>
                 <SET .CURPOS 20>
                 <SET .ITEM-FOUND T>
@@ -980,7 +980,7 @@ SOFTWARE."
     >
     <COND (.ITEM-FOUND <TELL "." CR>)>
     <COND (<AND <NOT .ITEM-FOUND> ,PRINT-NONE-WHEN-NO-ITEMS>
-        <COND (<NOT ,COMPACT-ROOM-DESC> <TELL CR>)>
+        <COND (<NOT <OR ,GAME-CONVERSATIONAL ,COMPACT-ROOM-DESC>> <TELL CR>)>
         <TELL ,MSG-VISIBLE-ITEMS-HERE ,MSG-WHEN-NO-EXITS-ITEMS CR>
     )>
 >
@@ -989,7 +989,7 @@ SOFTWARE."
     ;"Show exits"
     <DO (I 1 6) <COND (<G? <GET-ROOM-EXIT ,CURRENT-ROOM .I> 0> <SET EXIT-FOUND T>)>>
     <COND (.EXIT-FOUND
-        <COND (<NOT ,COMPACT-ROOM-DESC> <TELL CR>)>
+        <COND (<NOT <OR ,GAME-CONVERSATIONAL ,COMPACT-ROOM-DESC>> <TELL CR>)>
         <TELL ,MSG-OBVIOUS-EXITS>
         <SET FIRST-EXIT T>
         <DO (I 1 6)
@@ -1008,7 +1008,7 @@ SOFTWARE."
     <CRLF>
     )>
     <COND (<AND <NOT .EXIT-FOUND> ,PRINT-NONE-WHEN-NO-EXITS>
-        <COND (<NOT ,COMPACT-ROOM-DESC> <TELL CR>)>
+        <COND (<NOT <OR ,GAME-CONVERSATIONAL ,COMPACT-ROOM-DESC>> <TELL CR>)>
         <TELL ,MSG-OBVIOUS-EXITS ,MSG-WHEN-NO-EXITS-ITEMS CR>
     )>
 >

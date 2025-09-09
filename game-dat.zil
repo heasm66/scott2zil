@@ -46,19 +46,22 @@ ZIP   The game compiles to version 3 (z3). You lose the following:
 ;"Set this to the screen width your aiming. 64 is the original TRS-80 width. In conversational mode ignored, intrepreter does the word-wrap"
 <CONSTANT SCREEN-WIDTH 64>      ;"TRS-80"
 
+;"Character to use as seperation in classic mode"
+<CONSTANT SEPERATION-CHAR !\_>
+
 ;"Set if the game should use fixed font, or not"
 <CONSTANT USE-FIXED-FONT T>
 
 ;"Determines if the instruction '70 CLS - clear' should clear screen or be ignored. In conversational mode it is always ignored."
 <CONSTANT NO-CLS T>
 
-;"Allow the player to change game mode between classic/conversational:
-    <>  No
-    T   Yes"
+;"Determines (in conversational):
+    <>  Brief mode. Only print full room description on first visit
+    T   Verbose mode. Always print full room description"
 <GLOBAL CAN-PLAYER-CHANGE-GAME-MODE T>
 
-;"Determines if there should be blank lines between DESC, ITEMS & EXITS"
-<CONSTANT COMPACT-ROOM-DESC T>
+;"Determines if there should be blank lines between DESC, ITEMS & EXITS in classic mode"
+<CONSTANT COMPACT-ROOM-DESC <>>
 
 ;"Sets on wich row the split line should be start. If there during the game is to few lines the game will
   add new lines to the upper area lines. Note that if you set COMPACT-ROOM-DESC the actual split line is decreased by 3."
