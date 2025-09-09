@@ -31,8 +31,6 @@ SOFTWARE."
   Definition of constants and globals
   ====================================================================================="
 
-<CONSTANT SCREEN-BAR <ISTRING <* 5 ,SCREEN-WIDTH> ,SEPERATION-CHAR>>
-
 ;"Define global variables and constants"
 <CONSTANT FLAG-LAMP-EMPTY 16>
 <CONSTANT FLAG-DARK 15>
@@ -1149,7 +1147,7 @@ Thanks to:|
                 <CLEAR 1>
                 <SCREEN 1>
                 <CURSET ,STARTING-SPLITROW 1>
-                <TELL ,SCREEN-BAR>
+                <PRINT-BAR>
                 <CURSET 1 1>
             )>
 
@@ -1173,12 +1171,17 @@ Thanks to:|
                     <CLEAR 1>
                     <SCREEN 1>
                     <CURSET ,STARTING-SPLITROW 1>
-                    <TELL ,SCREEN-BAR>
+                    <PRINT-BAR>
                     <CURSET 1 1>
                     <PRINT-ROOM-DESC>
                 )>
             <SCREEN 0>
             )>
+        >
+
+        <ROUTINE PRINT-BAR ("AUX" SCREEN-WIDTH)
+            <SET SCREEN-WIDTH <GETB 0 33>>
+            <DO (I 0 .SCREEN-WIDTH) <PRINTC ,SEPERATION-CHAR>>
         >
 
         <ROUTINE ABOUT-HEADER ()
