@@ -339,8 +339,7 @@ SOFTWARE."
                     <COND (<OR <0? .ACTION-NOUN-ID> <=? .ACTION-NOUN-ID .NOUN-ID>>
                         <SET FOUND-WORD T>
                         <COND (<EVALUATE-CONDITIONS .I>
-                            <COND (<OR ,AUTOGET-AS-SCOTTFREE <NOT <HANDLE-GET-DROP .VERB-ID .NOUN-ID T>>>     ;"Try GET/DROP"
-                                <EXECUTE-COMMANDS .I>)>
+                            <EXECUTE-COMMANDS .I>
                             <SET .WORD-ACTION-DONE T>
                             <COND (<NOT ,CONTINUE-FLAG> <RETURN>)>
                         )>
@@ -355,7 +354,7 @@ SOFTWARE."
     <COND (.WORD-ACTION-DONE <RETURN>)>
 
     <COND (<OR <NOT .FOUND-WORD> ,AUTOGET-AS-SCOTTFREE>
-        <COND (<HANDLE-GET-DROP .VERB-ID .NOUN-ID <>> <RETURN>)>
+        <COND (<HANDLE-GET-DROP .VERB-ID .NOUN-ID> <RETURN>)>
     )>
 
     <COND (.FOUND-WORD
@@ -787,7 +786,7 @@ SOFTWARE."
     <RETURN <GET-CONDITION-ARG .ID <- ,INSTRUCTION-ARG-INDEX 1>>>   ;"but RTRUEhe old pointers argument"
 >
 
-<ROUTINE HANDLE-GET-DROP (VERB-ID NOUN-ID TRY? "AUX" ITEM-ID NOUN ITEM-NOUN SEARCH-LOC ITEM-NOUN-MATCH ITEM-IN-INV (ITEM-HANDLED? <>))
+<ROUTINE HANDLE-GET-DROP (VERB-ID NOUN-ID "AUX" ITEM-ID NOUN ITEM-NOUN SEARCH-LOC ITEM-NOUN-MATCH ITEM-IN-INV (ITEM-HANDLED? <>))
     ;"Exit if the verb isn't get or drop"
     <COND (<AND <NOT <=? .VERB-ID ,VERB-GET>> <NOT <=? .VERB-ID ,VERB-DROP>>> <RFALSE>)>
 
@@ -843,9 +842,6 @@ SOFTWARE."
         <COND (<AND <=? <GET-ITEM-LOC .I> ,ROOM-INVENTORY> <WORD-EQUAL? .NOUN .ITEM-NOUN>> <SET ITEM-IN-INV T>)>    ;"Is the item in inventory and have a matching noun?"
         <COND (<AND <=? <GET-ITEM-LOC .I> .SEARCH-LOC> <WORD-EQUAL? .NOUN .ITEM-NOUN>> <SET ITEM-ID .I>)>           ;"Is the item in room or inventory and have a matching noun?"
     >
-
-    ;"If noun doesn't match item, return false if TRY? is true (don't print any message)"
-    <COND (<AND <NOT .ITEM-NOUN-MATCH> .TRY?> <RFALSE>)>
 
     ;"If noun is undefined, return with an error text"
     <COND (<AND <=? .NOUN-ID 0> <NOT .ITEM-NOUN-MATCH>> <TELL ,MSG-WHAT CR> <RTRUE>)>
