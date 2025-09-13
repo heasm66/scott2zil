@@ -82,6 +82,9 @@ ZIP   The game compiles to version 3 (z3). You lose the following:
 ;"Allow player to use GET/DROP ALL for all AutoGet items"
 <CONSTANT GET-DROP-ALL-ALLOWED? T>
 
+;"Allow player to use pronoun IT"
+<CONSTANT IT-PRONOUN-ALLOWED? T>
+
 ;"Determines in wich order room descriptions should print
     0   DESC, ITEMS, EXITS
     1   DESC, EXITS, ITEMS"

@@ -70,6 +70,7 @@ SOFTWARE."
 <GLOBAL PARSEBUF <ITABLE NONE 63 (BYTE)>>
 <GLOBAL SA-VERB <ITABLE NONE 10 (BYTE)>>
 <GLOBAL SA-NOUN <ITABLE NONE 10 (BYTE)>>
+<GLOBAL THIS-IS-IT 0>
 <GLOBAL CONTINUE-FLAG <>>
 <GLOBAL ALTERNATE-ROOM <TABLE 0 0 0 0 0 0 0 0 0 0>>
 <GLOBAL ALTERNATE-COUNTER <TABLE 0 0 0 0 0 0 0 0 0 0>>
@@ -77,6 +78,7 @@ SOFTWARE."
 <GLOBAL ALTERNATE-ROOM-REGISTER 0>
 <GLOBAL INSTRUCTION-ARG-INDEX 1>
 <GLOBAL NEED-TO-LOOK? <>>
+<GLOBAL IS-MSG-PRINTED? <>>
 
 ;"Version 3 always has a statusline. These are for that!"
 <GLOBAL SCORE 0>
@@ -230,11 +232,20 @@ SOFTWARE."
             >
         )>
 
+        ;"Allow IT?"
+        <COND (<AND ,IT-PRONOUN-ALLOWED? <NOT <0? ,THIS-IS-IT>> <NOT <0? .VERB-ID>> 
+                    <=? .NUMBER-OF-WORDS 2> <=? <GETB ,SA-NOUN 0> !\i> 
+                    <=? <GETB ,SA-NOUN 1> !\t> <=? <GETB ,SA-NOUN 2> 0>>
+            <SET NOUN-ID ,THIS-IS-IT>)>
+
         <COND (<AND <OR <0? .VERB-ID> <AND <=? .NUMBER-OF-WORDS 2> <0? .NOUN-ID>>>
                     <NOT <OR <=? .VERB-ID ,VERB-GET> <=? .VERB-ID ,VERB-DROP>>>>
             <TELL ,MSG-UNKNOWN-WORDS CR>
             <AGAIN>
         )>
+
+        ;"Store IT-item"
+        <COND (<GRTR? .NOUN-ID 6> <SETG THIS-IS-IT .NOUN-ID>)>
 
         <RUN-ACTIONS .VERB-ID .NOUN-ID>
         <SET VERB-ID 0>
@@ -311,6 +322,7 @@ SOFTWARE."
     <SET FOUND-WORD <>>
     <SETG CONTINUE-FLAG <>>
     <SET WORD-ACTION-DONE <>>
+    <SETG IS-MSG-PRINTED? <>>
     <DO (I 0 ,NUMBER-ACTIONS)
         <SET ACTION-VERB-ID <GET-ACTION-VERB-ID .I>>
         <SET ACTION-NOUN-ID <GET-ACTION-NOUN-ID .I>>
@@ -351,7 +363,9 @@ SOFTWARE."
 
     <COND (<0? .VERB-ID> <RETURN>)>
 
-    <COND (.WORD-ACTION-DONE <RETURN>)>
+    <COND (.WORD-ACTION-DONE 
+        <COND (<NOT ,IS-MSG-PRINTED?> <TELL ,MSG-OK CR>)>
+        <RETURN>)>
 
     <COND (<OR <NOT .FOUND-WORD> ,AUTOGET-AS-SCOTTFREE>
         <COND (<HANDLE-GET-DROP .VERB-ID .NOUN-ID> <RETURN>)>
@@ -494,10 +508,10 @@ SOFTWARE."
             <SET INSTRUCTION <GET-ACTION-INSTRUCTION .ACTION-ID .I>>
 
             ;"Instructions 102- are messages"
-            <COND (<G=? .INSTRUCTION 102> <TELL <GET-MESSAGE <- .INSTRUCTION 50>> CR>)>
+            <COND (<G=? .INSTRUCTION 102> <TELL <GET-MESSAGE <- .INSTRUCTION 50>> CR> <SETG IS-MSG-PRINTED? T>)>
 
             ;"Instructions 1-51 are messages"
-            <COND (<AND <G? .INSTRUCTION 0> <L? .INSTRUCTION 52> <TELL <GET-MESSAGE .INSTRUCTION> CR>>)>
+            <COND (<AND <G? .INSTRUCTION 0> <L? .INSTRUCTION 52>> <TELL <GET-MESSAGE .INSTRUCTION> CR> <SETG IS-MSG-PRINTED? T>)>
 
             ;"Instructions 52-101 are commands"
             <COND (<AND <G? .INSTRUCTION 51> <L? .INSTRUCTION 102>>
@@ -557,6 +571,7 @@ SOFTWARE."
 
     ;"61 DEAD - die - Death. Dark flag cleared, player moved to last room"
     <COND (<=? .CODE 61>
+        <SETG ,IS-MSG-PRINTED? T>
         <TELL ,MSG-DEAD CR>
         <SET-FLAG ,FLAG-DARK <>>
         <SETG CURRENT-ROOM ,NUMBER-ROOMS>
@@ -570,17 +585,20 @@ SOFTWARE."
 
     ;"63 FINI - game_over - Game over."
     <COND (<=? .CODE 63>
+        <SETG ,IS-MSG-PRINTED? T>
         <TELL ,MSG-GAME-OVER CR>
         <QUIT>
     )>
 
     ;"64 DspRM - look - Describe room"
     <COND (<=? .CODE 64>
+        <SETG ,IS-MSG-PRINTED? T>
         <SHOW-ROOM-DESC>
     )>
 
     ;"65 SCORE - score - Score"
     <COND (<=? .CODE 65>
+        <SETG ,IS-MSG-PRINTED? T>
         <SET STORED-TREASURES 0>
         <DO (I 0 ,NUMBER-ITEMS)
             <COND (<AND <ITEM-TREASURE? .I> <=? <GET-ITEM-LOC .I> ,TREASURE-ROOM>>
@@ -599,6 +617,7 @@ SOFTWARE."
 
     ;"66 INV - inventory - Inventory"
     <COND (<=? .CODE 66>
+        <SETG ,IS-MSG-PRINTED? T>
         <TELL ,MSG-IM-CARRYING CR>
         <SET ITEM-FOUND <>>
         <SET NOT-FIRST-ITEM <>>
@@ -680,6 +699,7 @@ SOFTWARE."
 
     ;"76 DspRM - look2 - Look (same as 64 ?? - check)"
     <COND (<=? .CODE 76>
+        <SETG ,IS-MSG-PRINTED? T>
         <SHOW-ROOM-DESC>
     )>
 
@@ -690,6 +710,7 @@ SOFTWARE."
 
     ;"78 DspCT - print_counter - Print current counter value. Some drivers only cope with 0-99 apparently"
     <COND (<=? .CODE 78>
+        <SETG ,IS-MSG-PRINTED? T>
         <TELL N ,COUNTER-REGISTER>
     )>
 
@@ -728,11 +749,13 @@ SOFTWARE."
 
     ;"84 SAYw - print_noun - Echo noun player typed without CR"
     <COND (<=? .CODE 84>
+        <SETG ,IS-MSG-PRINTED? T>
         <PRINT-NOUN>
     )>
 
     ;"85 SAYwCR - println_noun - Echo noun player typed without CR"
     <COND (<=? .CODE 85>
+        <SETG ,IS-MSG-PRINTED? T>
         <PRINT-NOUN>
         <CRLF>
     )>
@@ -1100,6 +1123,7 @@ Thanks to:|
 
         ;"<INPUT>, <CLEAR>, <SPLIT> is not supported in V3"
         <ROUTINE SHOW-ROOM-DESC()
+            <SETG ,IS-MSG-PRINTED? T>
             <PRINT-ROOM-DESC>
         >
 
@@ -1138,6 +1162,8 @@ Thanks to:|
         >
 
         <ROUTINE SHOW-ROOM-DESC("AUX" NEW-ROWPOS)
+            <SETG ,IS-MSG-PRINTED? T>
+
             <COND (<NOT ,GAME-CONVERSATIONAL>
                 <SPLIT ,STARTING-SPLITROW>
                 <CLEAR 1>
