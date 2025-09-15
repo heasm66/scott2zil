@@ -96,6 +96,10 @@ ZIP   The game compiles to version 3 (z3). You lose the following:
 <CONSTANT CHARS-BETWEEN-EXITS ", ">
 <CONSTANT CHARS-BETWEEN-ITEMS " - ">
 
+;"Light soutce settings"
+<CONSTANT PREHISTORIC-LAMP? <>>             ;"Should light source be destroyed when empty? See -p in ScottFree, use when flag 16 is not handled in game."
+<CONSTANT LIGHT-WARNING-EVERY-TURN? <>>     ;"<> = every turn, T = every fifth turn (when under warning threshold)"
+
 ;"Text formatting settings"
 <CONSTANT PRINT-DOT-AFTER-DESC T>
 <CONSTANT PRINT-DOT-AFTER-EXITS <>>
