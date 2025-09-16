@@ -79,6 +79,7 @@ SOFTWARE."
 <GLOBAL INSTRUCTION-ARG-INDEX 1>
 <GLOBAL NEED-TO-LOOK? <>>
 <GLOBAL IS-MSG-PRINTED? <>>
+<GLOBAL FOUND-WORD-ACTION <>>
 
 ;"Version 3 always has a statusline. These are for that!"
 <GLOBAL SCORE 0>
@@ -255,7 +256,7 @@ SOFTWARE."
                     <NOT <=? <GET ,ALTERNATE-COUNTER ,COUNTER-TIME-LIMIT> -1>>>    ;"-1 on counter mean lights never run out"
             <PUT ,ALTERNATE-COUNTER ,COUNTER-TIME-LIMIT <- <GET ,ALTERNATE-COUNTER ,COUNTER-TIME-LIMIT> 1>>
 
-            <COND (<L? <GET ,ALTERNATE-COUNTER ,COUNTER-TIME-LIMIT> 0>
+            <COND (<=? <GET ,ALTERNATE-COUNTER ,COUNTER-TIME-LIMIT> 0>
                 <COND (<ITEM-HERE? ,LIGHT-SOURCE-ID> <TELL ,MSG-LIGHT-HAS-RUN-OUT CR>)>
                 <SET-FLAG ,FLAG-LAMP-EMPTY T>
                 <COND (,PREHISTORIC-LAMP? <SET-ITEM-LOC ,LIGHT-SOURCE-ID 0>)>
@@ -292,7 +293,7 @@ SOFTWARE."
 >
 
 <ROUTINE RUN-ACTIONS (VERB-ID NOUN-ID
-                        "AUX" ROOM-DARK DEST FOUND-WORD WORD-ACTION-DONE
+                        "AUX" ROOM-DARK DEST WORD-ACTION-DONE
                               ACTION-VERB-ID ACTION-NOUN-ID)
 
     ;"Handle GO [direction]"
@@ -322,7 +323,7 @@ SOFTWARE."
     )>
 
     ;"Run through all actions"
-    <SET FOUND-WORD <>>
+    <SETG FOUND-WORD-ACTION <>>
     <SETG CONTINUE-FLAG <>>
     <SET WORD-ACTION-DONE <>>
     <SETG IS-MSG-PRINTED? <>>
@@ -352,7 +353,7 @@ SOFTWARE."
                 <COND (<NOT .WORD-ACTION-DONE>
                     <SET CONTINUE-FLAG <>>
                     <COND (<OR <0? .ACTION-NOUN-ID> <=? .ACTION-NOUN-ID .NOUN-ID>>
-                        <SET FOUND-WORD T>
+                        <SETG FOUND-WORD-ACTION T>
                         <COND (<EVALUATE-CONDITIONS .I>
                             <EXECUTE-COMMANDS .I>
                             <SET .WORD-ACTION-DONE T>
@@ -370,11 +371,11 @@ SOFTWARE."
         <COND (<NOT ,IS-MSG-PRINTED?> <TELL ,MSG-OK CR>)>
         <RETURN>)>
 
-    <COND (<OR <NOT .FOUND-WORD> ,AUTOGET-AS-SCOTTFREE>
+    <COND (<OR <NOT ,FOUND-WORD-ACTION> ,AUTOGET-AS-SCOTTFREE>
         <COND (<HANDLE-GET-DROP .VERB-ID .NOUN-ID> <RETURN>)>
     )>
 
-    <COND (.FOUND-WORD
+    <COND (,FOUND-WORD-ACTION
         <TELL ,MSG-CANT-DO-THAT-YET CR>
     )
     (ELSE
@@ -826,13 +827,16 @@ SOFTWARE."
             <COND (<IS-CURRENT-ROOM-DARK?> <TELL ,MSG-TOO-DARK-TO-SEE CR> <RTRUE>)>
             <DO (I 0 ,NUMBER-ITEMS)
                 <SET ITEM-NOUN <GET <GET ,ITEMS-TABLE .I> 5>>
-                <COND (<AND <=? <GET-ITEM-LOC .I> ,CURRENT-ROOM> <NOT <0? <GETB .ITEM-NOUN 0>>>>        ;"Here and AutoGet"
+                <COND (<AND <=? <GET-ITEM-LOC .I> ,CURRENT-ROOM> <NOT <0? <GETB .ITEM-NOUN 0>>>>  ;"Here and AutoGet"
+                    <TELL <GET-ITEM-DESC .I> ": ">
                     <SETG AUTOGET-DISABLED? T>
-                    <RUN-ACTIONS .VERB-ID .I>                                                           ;"Get the item (run through actions for noun)"
+                    <RUN-ACTIONS .VERB-ID <GET-ITEM-NOUN-ID .I>>                                  ;"Get the item (run through actions for noun). -1 means word handled"
                     <SETG AUTOGET-DISABLED? <>>
-                    <COND (<NOT <CAN-CARRY-MORE?>> <RTRUE>)>                                            ;"Can I carry one more item?"
-                    <SET-ITEM-LOC .I ,ROOM-INVENTORY>                                                   ;"Get the item"
-                    <TELL <GET-ITEM-DESC .I> ": " ,MSG-OK CR>
+                    <COND (<NOT ,FOUND-WORD-ACTION>                                               ;"Handled by word action"
+                        <COND (<NOT <CAN-CARRY-MORE?>> <RTRUE>)>                                  ;"Can I carry one more item?"
+                        <SET-ITEM-LOC .I ,ROOM-INVENTORY>                                         ;"Get the item"
+                        <TELL ,MSG-OK CR>
+                    )>
                     <SET ITEM-HANDLED? T>
                 )>
             >
@@ -1064,6 +1068,15 @@ SOFTWARE."
 <ROUTINE GET-ACTION-INSTRUCTION (ID INDEX) <RETURN <GET <GET ,ACTIONS-TABLE .ID> <+ .INDEX 12>>>>
 <ROUTINE GET-MESSAGE (ID) <RETURN <GET ,MESSAGES-TABLE .ID>>>
 <ROUTINE ABORT-WAIT () <RTRUE>>
+
+<ROUTINE GET-ITEM-NOUN-ID (ITEM-ID "AUX" TMP1 TMP2)
+    <SET TMP1 <GET <GET ,ITEMS-TABLE .ITEM-ID> 5>>      ;"noun text for item (text between //"
+    <DO (I 0 ,NUMBER-VOCABULARY)
+        <SET TMP2 <GET <GET ,VOCABULARY-TABLE .I> 2>>   ;"Current noun to test"
+        <COND (<WORD-EQUAL? .TMP1 .TMP2> <RETURN .I>)>
+    >
+    <RETURN -1>     ;"not found"
+>
 
 <ROUTINE ABOUT ()
     <TELL "This game was created with..." CR CR>
