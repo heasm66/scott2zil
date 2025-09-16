@@ -80,6 +80,7 @@ SOFTWARE."
 <GLOBAL NEED-TO-LOOK? <>>
 <GLOBAL IS-MSG-PRINTED? <>>
 <GLOBAL FOUND-WORD-ACTION <>>
+<GLOBAL WORD-ACTION-DONE <>>
 
 ;"Version 3 always has a statusline. These are for that!"
 <GLOBAL SCORE 0>
@@ -292,9 +293,7 @@ SOFTWARE."
     >
 >
 
-<ROUTINE RUN-ACTIONS (VERB-ID NOUN-ID
-                        "AUX" ROOM-DARK DEST WORD-ACTION-DONE
-                              ACTION-VERB-ID ACTION-NOUN-ID)
+<ROUTINE RUN-ACTIONS (VERB-ID NOUN-ID "AUX" ROOM-DARK DEST ACTION-VERB-ID ACTION-NOUN-ID)
 
     ;"Handle GO [direction]"
     <COND (<AND <=? .VERB-ID ,VERB-GO> <L=? .NOUN-ID ,DIRECTION-NOUNS>>
@@ -325,7 +324,7 @@ SOFTWARE."
     ;"Run through all actions"
     <SETG FOUND-WORD-ACTION <>>
     <SETG CONTINUE-FLAG <>>
-    <SET WORD-ACTION-DONE <>>
+    <SETG WORD-ACTION-DONE <>>
     <SETG IS-MSG-PRINTED? <>>
     <DO (I 0 ,NUMBER-ACTIONS)
         <SET ACTION-VERB-ID <GET-ACTION-VERB-ID .I>>
@@ -350,13 +349,13 @@ SOFTWARE."
         ;"Word action"
         <COND (<G? .VERB-ID 0>
             <COND (<=? .ACTION-VERB-ID .VERB-ID>
-                <COND (<NOT .WORD-ACTION-DONE>
+                <COND (<NOT ,WORD-ACTION-DONE>
                     <SET CONTINUE-FLAG <>>
                     <COND (<OR <0? .ACTION-NOUN-ID> <=? .ACTION-NOUN-ID .NOUN-ID>>
                         <SETG FOUND-WORD-ACTION T>
                         <COND (<EVALUATE-CONDITIONS .I>
                             <EXECUTE-COMMANDS .I>
-                            <SET .WORD-ACTION-DONE T>
+                            <SETG ,WORD-ACTION-DONE T>
                             <COND (<NOT ,CONTINUE-FLAG> <RETURN>)>
                         )>
                     )>
@@ -367,7 +366,7 @@ SOFTWARE."
 
     <COND (<0? .VERB-ID> <RETURN>)>
 
-    <COND (.WORD-ACTION-DONE 
+    <COND (,WORD-ACTION-DONE 
         <COND (<NOT ,IS-MSG-PRINTED?> <TELL ,MSG-OK CR>)>
         <RETURN>)>
 
@@ -377,6 +376,7 @@ SOFTWARE."
 
     <COND (,FOUND-WORD-ACTION
         <TELL ,MSG-CANT-DO-THAT-YET CR>
+        <SETG ,WORD-ACTION-DONE T>          ;"Prevent GET ALL from getting the item"
     )
     (ELSE
         <TELL ,MSG-DONT-UNDERSTAND CR>
@@ -832,7 +832,7 @@ SOFTWARE."
                     <SETG AUTOGET-DISABLED? T>
                     <RUN-ACTIONS .VERB-ID <GET-ITEM-NOUN-ID .I>>                                  ;"Get the item (run through actions for noun). -1 means word handled"
                     <SETG AUTOGET-DISABLED? <>>
-                    <COND (<NOT ,FOUND-WORD-ACTION>                                               ;"Handled by word action"
+                    <COND (<NOT ,WORD-ACTION-DONE>                                                ;"Handled by word action"
                         <COND (<NOT <CAN-CARRY-MORE?>> <RTRUE>)>                                  ;"Can I carry one more item?"
                         <SET-ITEM-LOC .I ,ROOM-INVENTORY>                                         ;"Get the item"
                         <TELL ,MSG-OK CR>
